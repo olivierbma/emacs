@@ -1,76 +1,269 @@
-;;; init.el --- Spacemacs Initialization File -*- no-byte-compile: t -*-
-;;
-;; Copyright (c) 2012-2024 Sylvain Benner & Contributors
-;;
-;; Author: Sylvain Benner <sylvain.benner@gmail.com>
-;; URL: https://github.com/syl20bnr/spacemacs
-;;
-;; This file is not part of GNU Emacs.
-;;
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
-;;
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-;;
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; basic variables definitions here
+
+(tool-bar-mode -1)  ; hide the icons
+(scroll-bar-mode -1); hide scrollbar
+(setq inhibit-splash-screen t) ; remove welcome screen
+(setq use-file-dialog nil) 
+(setq scroll-margin 8)
+(setq scroll-conservatively 10000)
+
+(setq backup-directory-alist `(("." "~/.emacs.d/.saves")))
+(setq read-process-output-max (* 8 1024 1024)) ; 8MB
+(add-to-list 'load-path "~/.emacs.d/lisp/")
+(setq gc-cons-threshold (* 5 1024 1024))
 
 
-;; Without this comment emacs25 adds (package-initialize) here
-;; (package-initialize)
+;; setting of package manager
 
-;; Avoid garbage collection during startup.
-;; see `SPC h . dotspacemacs-gc-cons' for more info
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
-(defconst emacs-start-time (current-time))
-(setq gc-cons-threshold 402653184 gc-cons-percentage 0.6)
-(load (concat (file-name-directory load-file-name) "core/core-load-paths")
-      nil (not init-file-debug))
-(load (concat spacemacs-core-directory "core-versions")
-      nil (not init-file-debug))
-(load (concat spacemacs-core-directory "core-dumper")
-      nil (not init-file-debug))
+(setq straight-use-package-by-default t)
+(setq use-package-always-defer t)
+(setq package-native-compile t)
 
-;; Remove compiled core files if they become stale or Emacs version has changed.
-(load (concat spacemacs-core-directory "core-compilation")
-      nil (not init-file-debug))
-(load spacemacs--last-emacs-version-file t (not init-file-debug))
-(when (or (not (string= spacemacs--last-emacs-version emacs-version))
-          (> 0 (spacemacs//dir-byte-compile-state
-                (concat spacemacs-core-directory "libs/"))))
-  (spacemacs//remove-byte-compiled-files-in-dir spacemacs-core-directory))
-;; Update saved Emacs version.
-(unless (string= spacemacs--last-emacs-version emacs-version)
-  (spacemacs//update-last-emacs-version))
 
-(if (not (version<= spacemacs-emacs-min-version emacs-version))
-    (error (concat "Your version of Emacs (%s) is too old. "
-                   "Spacemacs requires Emacs version %s or above.")
-           emacs-version spacemacs-emacs-min-version)
-  ;; Disabling file-name-handlers for a speed boost during init might seem like
-  ;; a good idea but it causes issues like
-  ;; https://github.com/syl20bnr/spacemacs/issues/11585 "Symbol's value as
-  ;; variable is void: \213" when emacs is not built having:
-  ;; `--without-compress-install`
-  (let ((please-do-not-disable-file-name-handler-alist nil))
-    (require 'core-spacemacs)
-    (spacemacs/dump-restore-load-path)
-    (configuration-layer/load-lock-file)
-    (spacemacs/init)
-    (configuration-layer/stable-elpa-init)
-    (configuration-layer/load)
-    (spacemacs-buffer/display-startup-note)
-    (spacemacs/setup-startup-hook)
-    (spacemacs/dump-eval-delayed-functions)
-    (when (and dotspacemacs-enable-server (not (spacemacs-is-dumping-p)))
-      (require 'server)
-      (when dotspacemacs-server-socket-dir
-        (setq server-socket-dir dotspacemacs-server-socket-dir))
-      (unless (server-running-p)
-        (message "Starting a server...")
-        (server-start)))))
+;; setup env variables for all other packages
+(use-package exec-path-from-shell
+  :ensure t
+  :defer t
+  :init
+  (exec-path-from-shell-initialize)
+  )
+
+
+;; package for setting keybinds
+(use-package general
+  :ensure t
+  :defer t
+  
+  )
+
+;; basic config for emacs
+(use-package emacs
+  :init
+  ;; (setq initial-scratch-message nil)
+  (defun display-startup-echo-area-message())
+  (message "")
+  (defalias 'yes-or-no-p 'y-or-n-p)
+  (set-charset-priority 'unicode)
+  (setq locale-coding-system 'utf-8
+        coding-system-for-read 'utf-8
+        coding-system-for-write 'utf-8)
+  (set-terminal-coding-system 'utf-8)
+  (set-keyboard-coding-system 'utf-8)
+  (set-selection-coding-system 'utf-8)
+  (prefer-coding-system 'utf-8)
+  (setq default-process-coding-system '(utf-8-unix . utf-8-unix))
+  (setq-default indent-tabs-mode nil)
+  (setq-default tab-width 2)
+  (set-face-attribute 'default nil)
+  (set-face-attribute 'default nil
+                      :font "JetBrainsMono Nerd Font"
+                      :height 120)
+  (defun ab/enable-line-numbers()
+    "Enable relative line numbers"
+    (interactive)
+    (display-line-numbers-mode)
+    (setq display-line-numbers 'relative)
+    )
+  (add-hook 'prog-mode-hook #'ab/enable-line-numbers)
+  )
+
+
+
+;; vim like navigation keymap
+(use-package evil
+  :demand t ; no lazy load
+  :init
+  (setq evil-want-integration t)
+  :config
+
+  (evil-set-leader '(normal visual emacs) (kbd "SPC"))
+  (general-define-key
+   :prefix ""
+   :states '(normal visual)
+   "gc" 'my/toggle-comment
+   )
+  (evil-mode 1)
+  )
+
+(defun my/toggle-comment ()
+  (interactive)
+  (if (use-region-p)
+      (comment-or-uncomment-region (region-beginning) (region-end))
+    (comment-or-uncomment-region (line-beginning-position) (line-end-position))))
+
+
+(use-package doom-themes
+  :demand t ;; no lazy load
+  :config
+  (load-theme 'doom-challenger-deep t))
+
+
+(use-package doom-modeline
+  :ensure t
+  :defer t
+  :init (doom-modeline-mode 1))
+
+
+(use-package which-key
+  :demand t
+  :init
+  (setq which-key-idle-delay 0.2) ; instead of 1s
+  :config
+  (which-key-mode 1 ))
+
+
+;; language configuration
+
+(require 'languages-config)
+
+
+(use-package magit
+  :ensure t
+  :defer t
+  :init
+  (general-define-key
+   :prefix "SPC"
+   :states '(normal)
+   "m g" 'magit
+   "m f" 'magit-fetch
+   "m c" 'magit-commit
+   )
+
+  )
+
+
+(use-package nerd-icons
+  :defer t
+  :ensure t)
+
+
+(require 'capf-config)
+
+;; project management and searching
+
+(require 'project-config)
+
+
+(use-package dashboard
+  :defer t
+  :ensure t
+  :init
+  (setq initial-buffer-choice 'dashboard-open)
+  :config
+  ;; Set projectile as the projects backend
+  (setq dashboard-projects-backend 'projectile)
+
+  ;; Set the action to take when clicking on a project
+  (setq dashboard-projects-switch-function 'projectile-switch-project-by-name)
+
+  ;; Configure dashboard items
+  (setq dashboard-items '((projects . 10 )  ;; Show 10 recent projects
+                          (recents . 5)    ;; Show 5 recent files
+                          ) ;; Show 5 bookmarks
+        dashboard-set-heading-icons t
+        dashboard-set-file-icons t
+        dashboard-startup-banner 'logo   ;; Use Emacs logo
+        dashboard-center-content t)      ;; Center content
+
+  (setq dashboard-item-shortcuts '(
+                                 (recents . "r")
+                                 (projects . "p")))
+  (general-define-key
+   :keymaps 'dashboard-mode-map
+   :prefix ""
+   :states 'normal
+   ;; Navigation
+    "j" 'dashboard-next-line
+    "k" 'dashboard-previous-line
+    
+    ;; Item actions
+    (kbd "RET") 'dashboard-return
+    (kbd "<return>") 'dashboard-return
+    
+    ;; Shortcuts for sections
+    "p" 'dashboard-jump-to-projects
+    "r" 'dashboard-jump-to-recents
+    "f" 'dashboard-jump-to-bookmarks
+
+    "q" 'quit-window
+   )
+
+  ;; Initialize dashboard (this also tries to set up startup)
+  (dashboard-setup-startup-hook)
+
+
+  )
+
+
+(use-package indent-bars
+  :defer t
+  :ensure t
+  :hook (prog-mode . indent-bars-mode)
+  :config
+  (setq indent-bars-pattern "|"))
+
+
+(add-hook 'prog-mode-hook 'electric-pair-mode)
+
+(use-package topsy
+  :defer t
+  :ensure t
+  :hook
+  (prog-mode . topsy-mode))
+
+
+
+(require 'org-config)
+
+(use-package websocket
+  :defer t
+  :ensure t)
+
+(require 'typst-preview)
+
+
+;; setup dap-mode
+(require 'dap-config)
+
+
+
+(general-define-key
+   :states '(normal)
+   :prefix "SPC"
+   :keymaps '(general-default-keymaps dired-mode-map)
+   "s b" 'consult-buffer
+   "b k" 'kill-current-buffer
+   "b n" 'evil-next-buffer
+   "b N" 'evil-prev-buffer
+   )
+
+;; custom personalization
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(doom-modeline-buffer-file-name-style 'relative-from-project)
+ '(indent-bars-unspecified-bg-color "gray"))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )

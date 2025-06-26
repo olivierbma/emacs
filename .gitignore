@@ -69,6 +69,7 @@ url/*
 var/
 workspace
 undo/*
+straight/
 
 # Private directory
 /doc/COMMUNITY.org
