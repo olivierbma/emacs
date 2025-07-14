@@ -44,12 +44,16 @@
   (exec-path-from-shell-initialize)
   )
 
+;; performant terminal emulator in emacs
+(use-package vterm
+  :ensure t
+  )
+
 
 ;; package for setting keybinds
 (use-package general
   :ensure t
   :defer t
-  
   )
 
 ;; basic config for emacs
@@ -246,7 +250,7 @@
 (general-define-key
    :states '(normal)
    :prefix "SPC"
-   :keymaps '(general-default-keymaps dired-mode-map)
+   :keymaps '(general-default-keymaps dired-mode-map compilation-mode-map emacs-lisp-compilation-mode)
    "s b" 'consult-buffer
    "b k" 'kill-current-buffer
    "b n" 'evil-next-buffer

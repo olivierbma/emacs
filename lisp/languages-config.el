@@ -11,13 +11,33 @@
   (global-treesit-auto-mode t))
 
 
-(use-package typst-ts-mode
+
+(use-package tuareg
   :ensure t
-  :defer t)
+  :hook (  (ocaml-ts-mode) . eglot-ensure)
+  )
 
 (use-package ocaml-ts-mode
   :ensure t
   :defer t)
+
+(use-package ocaml-eglot
+  :ensure t
+  :after tuareg
+  :hook
+  (tuareg-mode . ocaml-eglot)
+  (ocaml-eglot . eglot-ensure))
+
+
+(use-package typst-ts-mode
+  :ensure t
+  :defer t)
+
+
+(use-package sly
+  :ensure t
+  :defer t)
+
 
 (use-package cuda-mode
   :ensure t
