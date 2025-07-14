@@ -102,3 +102,4 @@ eln-cache/
 meghanada/
 vimish-fold/
 .ci*
+.github*
