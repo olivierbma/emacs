@@ -103,3 +103,7 @@ meghanada/
 vimish-fold/
 .ci*
 .github*
+*.so
+projects
+tree-sitter/*
+*.so

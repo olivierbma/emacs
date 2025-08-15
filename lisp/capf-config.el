@@ -1,3 +1,5 @@
+;;; capf-config -- config
+
 (require 'nerd-icons)
 
 (use-package yasnippet
@@ -20,6 +22,7 @@
 (use-package vertico
   :ensure t
   :init
+  (vertico-mode)
   :hook
   (after-init . vertico-mode)
   )
@@ -28,6 +31,8 @@
 (use-package marginalia
   :ensure t
   :straight t
+  :init
+  (marginalia-mode)
   :hook
   (after-init . marginalia-mode))
 
@@ -86,3 +91,4 @@
 
 
 (provide 'capf-config)
+;;; capf-config.el ends here

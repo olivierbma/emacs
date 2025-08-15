@@ -84,7 +84,7 @@
     (display-line-numbers-mode)
     (setq display-line-numbers 'relative)
     )
-  (add-hook 'prog-mode-hook #'ab/enable-line-numbers)
+  (ab/enable-line-numbers )
   )
 
 
@@ -225,11 +225,88 @@
 
 (add-hook 'prog-mode-hook 'electric-pair-mode)
 
+(add-hook 'prog-mode-hook #'ab/enable-line-numbers)
+
 (use-package topsy
   :defer t
   :ensure t
   :hook
   (prog-mode . topsy-mode))
+
+;; (use-package silicon-el
+;;   :vc ( :url "https://github.com/iensu/silicon-el" :branch "master" )
+;;   )
+;; (:url :branch :lisp-dir :main-file :vc-backend :rev :shell-command :make :ignored-files)
+
+(use-package silicon
+  :straight (silicon :type git :host github :repo "iensu/silicon-el")
+  :config
+(defun silicon-region-to-clipboard (start end &optional universal-arg)
+  "Copy an image of the selected region between START and END to the clipboard using `silicon`.
+With a universal argument, prompt for options or let you edit them manually."
+  (interactive "r\nP")
+  (if (not (executable-find silicon-executable-path))
+      (error "Could not find `silicon` executable, check `silicon-executable-path`.")
+
+    (let* ((region-text (buffer-substring-no-properties start end))
+           (temp-file (make-temp-file "silicon-region" nil ".tmp"))
+           (is-edit (equal universal-arg '(16)))
+           (is-prompt (equal universal-arg '(4)))
+           (options
+            (cond
+             (is-edit
+              (read-string "Options: "
+                           (-silicon--build-command-opts-string)
+                           '-silicon--cmd-options-history
+                           (-silicon--build-command-opts-string)))
+             (is-prompt
+              (let ((theme
+                     (funcall silicon-completion-function
+                              "Theme: "
+                              silicon-available-themes
+                              nil
+                              (not (null silicon-available-themes))
+                              silicon-default-theme))
+                    (background-color
+                     (read-string "Background color: "
+                                  silicon-default-background-color
+                                  '-silicon--background-color-history
+                                  silicon-default-background-color))
+                    (highlight-lines (read-string "Highlight lines: " nil nil nil))
+                    (show-line-numbers (yes-or-no-p "Add line numbers? "))
+                    (show-window-controls (yes-or-no-p "Add window controls? "))
+                    (rounded-corners (yes-or-no-p "Rounded corners? ")))
+                (-silicon--build-command-opts-string
+                 :theme theme
+                 :background-color background-color
+                 :highlight-lines (if (string= "" highlight-lines) nil highlight-lines)
+                 :line-numbers show-line-numbers
+                 :window-controls show-window-controls
+                 :rounded-corners rounded-corners)))
+             (t (-silicon--build-command-opts-string))))
+
+           (command `(,silicon-executable-path
+                      ,@ (split-string options)
+                      "-c"
+                      ,temp-file)))
+
+      ;; Write the region to the temporary file
+      (with-temp-file temp-file
+        (insert region-text))
+
+      ;; Run silicon as a process
+      (apply #'start-process "silicon" "*silicon-output*" command)
+
+      ;; Schedule deletion of temp file
+      (run-at-time "10 sec" nil
+                   (lambda (file)
+                     (when (file-exists-p file)
+                       (delete-file file)))
+                   temp-file)
+
+      (message "Copied region to clipboard as image using silicon"))))
+
+  )
 
 
 
