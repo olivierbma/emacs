@@ -8,3 +8,4 @@
 (setq packag-enable-at-startup nil)
 
 (setq native-comp-speed 2)
+(setenv "LSP_USE_PLISTS" "true")

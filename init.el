@@ -10,7 +10,7 @@
 (setq backup-directory-alist `(("." "~/.emacs.d/.saves")))
 (setq read-process-output-max (* 8 1024 1024)) ; 8MB
 (add-to-list 'load-path "~/.emacs.d/lisp/")
-(setq gc-cons-threshold (* 5 1024 1024))
+(setq gc-cons-threshold (* 50 1024 1024)) ;; 50 MB
 
 
 ;; setting of package manager
@@ -48,6 +48,10 @@
 (use-package vterm
   :ensure t
   )
+
+(use-package gcmh
+  :init
+  (gcmh-mode 1))
 
 
 ;; package for setting keybinds
@@ -139,7 +143,7 @@
 
 (use-package magit
   :ensure t
-  :defer t
+  ;; :defer t
   :init
   (general-define-key
    :prefix "SPC"
@@ -219,6 +223,8 @@
   :defer t
   :ensure t
   :hook (prog-mode . indent-bars-mode)
+  :custom
+  (indent-bars-treesit-support t)
   :config
   (setq indent-bars-pattern "|"))
 
@@ -237,6 +243,21 @@
 ;;   :vc ( :url "https://github.com/iensu/silicon-el" :branch "master" )
 ;;   )
 ;; (:url :branch :lisp-dir :main-file :vc-backend :rev :shell-command :make :ignored-files)
+
+(use-package vc-jj
+  :ensure t
+  :defer t
+  :init
+  )
+
+(use-package jj-mode
+  :ensure t
+  :defer t
+  :straight (:host github :repo "bolivier/jj-mode.el")
+  ;; :after magit
+  :init
+  (require 'magit)
+  )
 
 (use-package silicon
   :straight (silicon :type git :host github :repo "iensu/silicon-el")

@@ -1,4 +1,4 @@
-;;; capf-config -- config
+;;; capf-config --- SOmething
 
 (require 'nerd-icons)
 
@@ -10,13 +10,12 @@
 (use-package eldoc
   :ensure t
   :init
-  (global-eldoc-mode))
+  (global-eldoc-mode 1))
 
 (use-package eldoc-box
   :ensure t
   :config
-  (global-eldoc-mode 1))
-
+  )
 
 ;; Vertico: A simple and efficient minibuffer completion
 (use-package vertico
@@ -44,19 +43,20 @@
   ;; Configure Emacs to use Orderless
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil
-        completion-category-overrides '((file (styles partial-completion))))
+        completion-category-overrides '((file (styles partial-completion))
+                                        (lsp-capf (styles orderless basic))))
   )
 
 (use-package corfu
   :defer t
   :ensure t
   :straight t
-  :hook (after-init . global-corfu-mode)
+  ;; :hook (after-init . global-corfu-mode)
   :config
   (setq corfu-cycle t                    ; Enable cycling for `corfu-next/previous'
         corfu-auto t                     ; Enable auto completion
-        corfu-auto-prefix 1              ; Minimum prefix length for auto completion
-        corfu-auto-delay 0.1             ; Auto completion delay
+        corfu-auto-prefix 2              ; Minimum prefix length for auto completion
+        corfu-auto-delay 0.2             ; Auto completion delay
         corfu-min-width 80
         corfu-count 10
         corfu-quit-at-boundary nil       ; Never quit at completion boundary
@@ -64,7 +64,6 @@
         corfu-quit-at-boundary nil
         ;; corfu-preview-current nil    ; Preview current candidate
         corfu-preselect 'prompt          ; Preselect the prompt
-        
         corfu-on-exact-match nil)        ; Configure handling of exact matches
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
 
@@ -88,6 +87,14 @@
   :defer t
   )
 
+
+(use-package cape
+  :ensure t
+  :defer t
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  )
 
 
 (provide 'capf-config)
