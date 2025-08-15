@@ -36,55 +36,6 @@
   :ensure t
   :defer t)
 
-;; try with lsp-bridge
-
-;; (use-package lsp-bridge
-;;   :straight '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
-;;             :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
-;;             :build (:not compile))
-;;   :init
-;;   (global-lsp-bridge-mode)
-
-;;   :config
-;;   (setq acm-enable-capf t)
-;;   (setq acm-enable-doc t)
-;;   (setq acm-enable-doc-markdown-render 'async)
-;;   (setq acm-enable-icon t) ;; icons
-;;   (setq acm-enable-yas t)
-;;   (setq acm-enable-tabnine nil)
-;;   (setq acm-enable-codeium nil)
-;;   (setq acm-enable-copilot nil)
-;;   (setq acm-candidate-match-function 'orderless-flex)
-;;   (setq acm-backend-lsp-show-progress t)
-
-;;   (general-define-key
-;;    :states '(normal)
-;;    :prefix "SPC"
-;;    "r n" 'lsp-bridge-rename
-;;    "c a" 'lsp-bridge-code-action
-;;    "g d" 'lsp-bridge-find-def-other-window
-;;    "g i" 'lsp-bridge-find-impl-other-window
-;;    "g r" 'lsp-bridge-find-references
-;;    "k" 'lsp-bridge-popup-documentation
-;;    )
-;;   (general-define-key
-;;    :states '(normal)
-;;    :prefix ""
-;;    "C-i"  'lsp-bridge-code-format
-;;    "] d" 'lsp-bridge-diagnostic-jump-next
-;;    "[ d" 'lsp-bridge-diagnostic-jump-prev
-;;    )
-;;   (general-define-key
-;;    :states '(insert)
-;;    :keymaps 'acm-mode-map
-;;    "TAB" #'acm-select-next
-;;    "<tab>" #'acm-select-next
-;;    "S-TAB" #'acm-select-prev
-;;    "<backtab>" #'acm-select-prev
-;;    )
- 
- 
-;; )
 
 (use-package flycheck
   :ensure t
