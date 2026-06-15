@@ -57,6 +57,7 @@
 
 (use-package flycheck
   :ensure t
+  :disabled t
   :defer t
   :init
   (global-flycheck-mode t)
@@ -66,66 +67,66 @@
   )
 
 
-(use-package lsp-mode
-  :init
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-         (python-mode . lsp)
-         (python-ts-mode . lsp)
-         (c++-ts-mode . lsp)
-         (typst-ts-mode . lsp)
-         (typescript-ts-mode . lsp)
-         (tsx-ts-mode . lsp)
-         )
-  :commands lsp
+;; lsp-bridge needs markdown-mode (renders documentation popups)
+(use-package markdown-mode
+  :ensure t
+  :defer t)
+
+;; lsp-bridge's acm-backend-yas requires yasnippet to be loadable when
+;; lsp-bridge loads, so make sure it is available (and globally enabled)
+;; before the lsp-bridge use-package below.
+(use-package yasnippet
+  :ensure t
+  :demand t
   :config
-  (add-to-list 'lsp-language-id-configuration '(typst-ts-mode . "typst"))
-  (setq lsp-signature-auto-activate t)
-  (setq lsp-eldoc-enable-hover t)
-  (setq lsp-auto-execute-action nil)
-  (setq lsp-log-io nil)
-  (setq lsp-completion-provider :capf)
-  (setq lsp-idle-delay 0.3)
-  (setq lsp-lens-enable nil)
-  (setq lsp-enable-symbol-highlighting nil)
-  (setq lsp-headerline-breadcrumb-enable nil)
+  (yas-global-mode 1))
+
+;; lsp-bridge: async LSP client with its own completion frontend (acm).
+;; Loaded from the vendored checkout in vendor/lsp-bridge.
+(use-package lsp-bridge
+  :load-path "~/.emacs.d/vendor/lsp-bridge"
+  :demand t
+  :init
+  ;; The Python backend runs through the repo's `python-lsp-bridge' uv
+  ;; wrapper, symlinked into ~/.local/bin. lsp-bridge auto-detects that
+  ;; name on PATH, so no `lsp-bridge-python-command' override is needed --
+  ;; `uv run' provisions the exact deps from the repo's uv.lock on demand.
+  (setq lsp-bridge-enable-hover-diagnostic t)
+  (setq lsp-bridge-enable-signature-help t)
+  (setq lsp-bridge-enable-diagnostics t)
+  :config
+  (global-lsp-bridge-mode)
+
+  ;; Completion menu (acm) keys: mirror the previous corfu behaviour.
+  ;; corfu had TAB -> next candidate, S-TAB -> previous; RET inserts.
+  ;; By default acm binds TAB to "complete", so we override it here.
+  (define-key acm-mode-map (kbd "TAB")       #'acm-select-next)
+  (define-key acm-mode-map (kbd "<tab>")     #'acm-select-next)
+  (define-key acm-mode-map (kbd "S-TAB")     #'acm-select-prev)
+  (define-key acm-mode-map (kbd "<backtab>") #'acm-select-prev)
+  ;; RET still accepts the selected candidate (acm default).
+
   (general-define-key
     :states '(normal)
     :prefix "SPC"
-    "g d" 'lsp-ui-peek-find-definitions 
-    "g i" 'lsp-ui-peek-find-implementation
-    "g r" 'lsp-ui-peek-find-references
-    "c a" 'lsp-execute-code-action
-    "r n" 'lsp-rename
-    "k" 'lsp-describe-thing-at-point
-    "s d" 'lsp-ui-flycheck-list
+    "g d" 'lsp-bridge-find-def
+    "g i" 'lsp-bridge-find-impl
+    "g r" 'lsp-bridge-find-references
+    "c a" 'lsp-bridge-code-action
+    "r n" 'lsp-bridge-rename
+    "k" 'lsp-bridge-popup-documentation
+    "s d" 'lsp-bridge-diagnostic-list
   )
   (general-define-key
     :states '(normal)
     :prefix ""
-    "C-i" 'lsp-format-buffer
-    "K"   'lsp-describe-thing-at-point
+    "C-i" 'lsp-bridge-code-format
+    "K"   'lsp-bridge-popup-documentation
+    "[d"  'lsp-bridge-diagnostic-jump-prev
+    "]d"  'lsp-bridge-diagnostic-jump-next
    )
   )
 
-
-;; (lsp-register-client
-;;  (make-lsp-client
-;;   :new-connection (lsp-stdio-connection '("tinymist" "lsp"))
-;;   :major-modes '(typst-ts-mode)
-;;   :server-id 'typst))
-
-;; optionally
-(use-package lsp-ui
-  :commands lsp-ui-mode
-  :config
-  ;; (setq lsp-ui-sideline-show-hover t)
-  (setq lsp-ui-sideline-show-hover nil)
-  (setq lsp-ui-sideline-delay 0.5)
-  (setq lsp-ui-sideline-show-code-actions t)
-  (setq lsp-ui-sideline-show-diagnostics t)
-  (setq lsp-ui-sideline-diagnostic-max-lines 5)
-  )
 ;; if you are helm user
 ;; (use-package helm-lsp :commands helm-lsp-workspace-symbol)
 

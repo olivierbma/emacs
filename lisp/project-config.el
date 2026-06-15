@@ -24,8 +24,10 @@
    "p i" 'projectile-project-info
    "p c" 'projectile-compile-project
    "p r" 'projectile-run-project
+   "p r" 'projectile-test-project
    "s p" 'consult-projectile-switch-project
    "s o" 'consult-outline
+   "g h" 'projectile-find-other-file
    "/" 'consult-line
    "`" 'consult-projectile-switch-to-buffer
    "<F5>" 'projectile-run-project

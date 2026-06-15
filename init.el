@@ -44,10 +44,40 @@
   (exec-path-from-shell-initialize)
   )
 
-;; performant terminal emulator in emacs
-(use-package vterm
+(setq ediff-window-setup-function 'ediff-setup-windows-plain)
+
+(use-package ztree
   :ensure t
+  :config
+  ;; Force ztree buffers to open in 'motion state so j/k work out of the box
+  (setq ztree-draw-unicode-lines t)
+  (general-setq evil-motion-state-modes (append evil-motion-state-modes '(ztree-mode)))
+  (general-define-key
+   :keymaps 'ztree-mode-map
+   :states 'motion
+   "RET" 'ztree-perform-action       ; Open file/directory or launch Ediff
+   "SPACE" 'ztree-perform-action     ; Alternative to Enter
+   "g"   'ztree-refresh              ; Refresh the view
+   "H"   'ztree-toggle-show-equal-files ; Toggle hiding/showing identical files
+   "q"   'ztree-view-kill            ; Quit ztree and return control to jj
+   )
   )
+
+(use-package ghostel
+  :ensure t
+  :defer t
+  :config
+  (ghostel-compile-global-mode t)
+  )
+(use-package claude-code-ide
+  :straight (:type git :host github :repo "manzaltu/claude-code-ide.el")
+  :init
+
+  (setq claude-code-ide-terminal-backend 'ghostel)
+
+  :config
+  (claude-code-ide-emacs-tools-setup)
+  ) ; Optionally enable Emacs MCP tools
 
 (use-package gcmh
   :init
@@ -96,10 +126,10 @@
 ;; vim like navigation keymap
 (use-package evil
   :demand t ; no lazy load
+  :ensure t
   :init
   (setq evil-want-integration t)
   :config
-
   (evil-set-leader '(normal visual emacs) (kbd "SPC"))
   (general-define-key
    :prefix ""
@@ -108,6 +138,9 @@
    )
   (evil-mode 1)
   )
+
+(with-eval-after-load 'evil
+  (evil-set-initial-state 'lsp-bridge-ref-mode 'emacs))
 
 (defun my/toggle-comment ()
   (interactive)
@@ -257,6 +290,13 @@
   ;; :after magit
   :init
   (require 'magit)
+  )
+
+(use-package git-gutter
+  :ensure t
+  :defer t
+  :init 
+  (global-git-gutter-mode +1)
   )
 
 (use-package silicon

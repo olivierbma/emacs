@@ -47,8 +47,12 @@
                                         (lsp-capf (styles orderless basic))))
   )
 
+;; NOTE: completion is now handled by lsp-bridge's own frontend (acm),
+;; see lisp/languages-config.el. corfu is left configured but no longer
+;; activated globally so the two don't fight over the same buffers.
 (use-package corfu
   :defer t
+  :disabled t
   :ensure t
   :straight t
   ;; :hook (after-init . global-corfu-mode)
