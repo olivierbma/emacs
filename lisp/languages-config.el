@@ -104,6 +104,7 @@
     :states '(normal)
     :prefix ""
     "C-i" 'lsp-format-buffer
+    "K"   'lsp-describe-thing-at-point
    )
   )
 

@@ -80,7 +80,7 @@
   (setq-default tab-width 2)
   (set-face-attribute 'default nil)
   (set-face-attribute 'default nil
-                      :font "JetBrainsMono Nerd Font"
+                      :font "CaskaydiaCove Nerd Font"
                       :height 120)
   (defun ab/enable-line-numbers()
     "Enable relative line numbers"
