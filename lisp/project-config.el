@@ -37,6 +37,14 @@
   ;; Optional: Configure Projectile to use Consult for switching files
   (setq projectile-switch-project-action #'consult-projectile)
 
+  ;; Don't treat temp dirs (e.g. /tmp diff files from jj/ztree reviews) as
+  ;; projects, so they stay out of the dashboard's projects list. This filters
+  ;; what `projectile-relevant-known-projects' returns (what dashboard shows).
+  (setq projectile-ignored-project-function
+        (lambda (project-root)
+          (string-prefix-p (expand-file-name temporary-file-directory)
+                           (expand-file-name project-root))))
+
   (add-hook 'compilation-finish-functions
           (lambda (buffer string)
             "Switch to compilation buffer if compilation finished."

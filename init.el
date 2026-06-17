@@ -46,12 +46,82 @@
 
 (setq ediff-window-setup-function 'ediff-setup-windows-plain)
 
+(use-package vdiff
+  :ensure t
+  :defer t
+  :config
+  ;; Like ediff, automatically refine every hunk so the exact words that
+  ;; changed within a line are highlighted (not just the whole changed line).
+  (setq vdiff-auto-refine t)
+  ;; The bindings below live in an evil auxiliary keymap on the vdiff-mode
+  ;; minor mode. evil only rebuilds its active keymaps on a state change, and
+  ;; vdiff enables the minor mode *after* the buffer is already in normal
+  ;; state, so the "," prefix wouldn't activate until you refocused the window
+  ;; (e.g. by clicking). Normalizing on the hook makes it work immediately.
+  (add-hook 'vdiff-mode-hook #'evil-normalize-keymaps)
+  ;; Evil keybinds for vdiff-mode (the local minor mode in diff buffers).
+  ;; Bind the whole vdiff command set under "," and add vim-diff-style
+  ;; direct keys for the common PR-review actions.
+  (general-define-key
+   :states 'normal
+   :keymaps 'vdiff-mode-map
+   ","   vdiff-mode-prefix-map      ; all vdiff commands under the comma prefix
+   "q"   'vdiff-quit                ; quit the diff and return to the ztree menu
+   "]c"  'vdiff-next-hunk           ; jump to next change (like vim diff)
+   "[c"  'vdiff-previous-hunk       ; jump to previous change
+   "gs"  'vdiff-send-changes        ; push this hunk to the other buffer
+   "gr"  'vdiff-receive-changes     ; pull the other buffer's hunk into this one
+   "gf"  'vdiff-refine-this-hunk    ; word-level refinement for this hunk
+   "zo"  'vdiff-open-fold           ; reveal context folded around a hunk (vim fold key)
+   "zc"  'vdiff-close-fold          ; fold context back up (vim fold key)
+   "zR"  'vdiff-open-all-folds
+   "zM"  'vdiff-close-all-folds)
+  ;; The default vdiff faces just inherit from diff-added/changed/removed,
+  ;; which doom-challenger-deep renders too subtly to see. Give them explicit
+  ;; backgrounds from the challenger-deep palette so changes pop. The refine
+  ;; faces highlight the exact words that changed within a hunk, so make them
+  ;; the brightest.
+  (custom-set-faces
+   '(vdiff-addition-face    ((t (:background "#1f4636" :foreground "#62d196"))))
+   '(vdiff-subtraction-face ((t (:background "#4a2230" :foreground "#ff5458"))))
+   '(vdiff-change-face      ((t (:background "#33335a" :foreground "#65b2ff"))))
+   '(vdiff-refine-added     ((t (:background "#2f7d54" :foreground "#ffffff" :weight bold))))
+   '(vdiff-refine-changed   ((t (:background "#4f4fa0" :foreground "#ffffff" :weight bold))))))
+
+(defvar ab/ztree-vdiff-window-config nil
+  "Window configuration saved before launching vdiff from ztree-diff.
+Restored on vdiff quit so we return to the ztree-diff menu.")
+
 (use-package ztree
   :ensure t
   :config
   ;; Force ztree buffers to open in 'motion state so j/k work out of the box
   (setq ztree-draw-unicode-lines t)
+  ;; Use vdiff instead of ediff when launching a file comparison from ztree.
+  ;; ztree-diff has no customizable backend; it calls `ztree-diff-ediff'
+  ;; directly, so override that function to drive vdiff instead.
+  ;; `vdiff-files' is autoloaded, so the call below pulls in vdiff on demand.
+  ;; Capture the ztree window layout first and restore it via vdiff's on-quit
+  ;; callback, so quitting the diff (q / ,q) drops you back into the ztree menu
+  ;; just like the original ediff hooks did.
+  (advice-add 'ztree-diff-ediff :override
+              (lambda (file-a file-b &optional _startup-hooks)
+                (setq ab/ztree-vdiff-window-config (current-window-configuration))
+                (vdiff-files file-a file-b nil
+                             (lambda (&rest _buffers)
+                               (when ab/ztree-vdiff-window-config
+                                 (set-window-configuration
+                                  ab/ztree-vdiff-window-config))))))
   (general-setq evil-motion-state-modes (append evil-motion-state-modes '(ztree-mode)))
+  ;; ztreediff-mode is a *major* mode (define-derived-mode), so hook it
+  ;; directly rather than guarding ztree-mode-hook on a nonexistent variable.
+  (add-hook 'ztreediff-mode-hook
+          (lambda ()
+            (hl-line-mode 1)
+            ;; Keep highlighting visible above ztree's colorful diff states
+            (make-local-variable 'hl-line-overlay-priority)
+            (setq hl-line-overlay-priority 1)))
+
   (general-define-key
    :keymaps 'ztree-mode-map
    :states 'motion
@@ -61,6 +131,13 @@
    "H"   'ztree-toggle-show-equal-files ; Toggle hiding/showing identical files
    "q"   'ztree-view-kill            ; Quit ztree and return control to jj
    )
+  )
+
+(use-package dirvish
+  :ensure t
+  :defer t
+  :init
+  (dirvish-override-dired-mode)
   )
 
 (use-package ghostel
@@ -167,6 +244,15 @@
   (setq which-key-idle-delay 0.2) ; instead of 1s
   :config
   (which-key-mode 1 ))
+
+;; Keep temp files (e.g. /tmp diff files from jj/ztree reviews) out of the
+;; recent-files list that the dashboard's "recents" section reads.
+(use-package recentf
+  :init
+  (recentf-mode 1)
+  :config
+  (add-to-list 'recentf-exclude
+               (concat "\\`" (regexp-quote (expand-file-name temporary-file-directory)))))
 
 
 ;; language configuration
