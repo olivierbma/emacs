@@ -107,3 +107,4 @@ vimish-fold/
 projects
 tree-sitter/*
 *.so
+vendor/lsp-bridge/*

@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: cpp-header
+# key: hdr
+# --
+/*
+ * File: `(file-name-nondirectory (or (buffer-file-name) ""))`
+ * Copyright (c) `(format-time-string "%Y")` ${1:Your Name}
+ *
+ * $0
+ */
