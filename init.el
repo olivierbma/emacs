@@ -81,12 +81,13 @@
   ;; backgrounds from the challenger-deep palette so changes pop. The refine
   ;; faces highlight the exact words that changed within a hunk, so make them
   ;; the brightest.
-  (custom-set-faces
-   '(vdiff-addition-face    ((t (:background "#1f4636" :foreground "#62d196"))))
-   '(vdiff-subtraction-face ((t (:background "#4a2230" :foreground "#ff5458"))))
-   '(vdiff-change-face      ((t (:background "#33335a" :foreground "#65b2ff"))))
-   '(vdiff-refine-added     ((t (:background "#2f7d54" :foreground "#ffffff" :weight bold))))
-   '(vdiff-refine-changed   ((t (:background "#4f4fa0" :foreground "#ffffff" :weight bold))))))
+  ;; (custom-set-faces
+  ;;  '(vdiff-addition-face    ((t (:background "#1f4636" :foreground "#62d196"))))
+  ;;  '(vdiff-subtraction-face ((t (:background "#4a2230" :foreground "#ff5458"))))
+  ;;  '(vdiff-change-face      ((t (:background "#33335a" :foreground "#65b2ff"))))
+  ;;  '(vdiff-refine-added     ((t (:background "#2f7d54" :foreground "#ffffff" :weight bold))))
+  ;;  '(vdiff-refine-changed   ((t (:background "#4f4fa0" :foreground "#ffffff" :weight bold)))))
+  )
 
 (defvar ab/ztree-vdiff-window-config nil
   "Window configuration saved before launching vdiff from ztree-diff.
@@ -254,6 +255,12 @@ Restored on vdiff quit so we return to the ztree-diff menu.")
   (add-to-list 'recentf-exclude
                (concat "\\`" (regexp-quote (expand-file-name temporary-file-directory)))))
 
+(use-package msgu
+  :straight (msgu :type git :host github :repo "jcs-elpa/msgu"
+                       :files (:defaults "msgu.el"))
+  :ensure t
+  :defer t
+  )
 
 ;; language configuration
 

@@ -24,7 +24,7 @@
    "p i" 'projectile-project-info
    "p c" 'projectile-compile-project
    "p r" 'projectile-run-project
-   "p r" 'projectile-test-project
+   "p t" 'projectile-test-project
    "s p" 'consult-projectile-switch-project
    "s o" 'consult-outline
    "g h" 'projectile-find-other-file

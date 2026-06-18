@@ -28,6 +28,92 @@
   (global-treesit-auto-mode))
 
 
+;;; ---------------------------------------------------------------------------
+;;; Doxygen docstring generation for C/C++ using the built-in tree-sitter
+;;; parse tree (no external packages; replaces the old ts-docstr which pulled
+;;; in the legacy emacs-tree-sitter package).
+;;; ---------------------------------------------------------------------------
+
+(defun my/doxygen--param-identifier (node)
+  "Return the parameter name held in declarator NODE, or nil."
+  (when node
+    (let ((id (treesit-search-subtree node "\\`identifier\\'")))
+      (and id (treesit-node-text id t)))))
+
+(defun my/doxygen--param-names (fdecl)
+  "Return the list of parameter name strings from FDECL, a function_declarator."
+  (let ((params (treesit-node-child-by-field-name fdecl "parameters"))
+        names)
+    (when params
+      (dolist (child (treesit-node-children params t))
+        (when (member (treesit-node-type child)
+                      '("parameter_declaration" "optional_parameter_declaration"))
+          (push (or (my/doxygen--param-identifier
+                     (treesit-node-child-by-field-name child "declarator"))
+                    "")
+                names))))
+    (nreverse names)))
+
+(defun my/doxygen-comment ()
+  "Insert a Doxygen comment skeleton for the C/C++ function at point.
+@param/@return lines are derived from the signature via the built-in
+tree-sitter parse tree."
+  (interactive)
+  (unless (treesit-parser-list)
+    (user-error "No tree-sitter parser in this buffer"))
+  (let ((func (treesit-parent-until
+               (treesit-node-at (point))
+               (lambda (n)
+                 (member (treesit-node-type n)
+                         '("function_definition" "declaration"
+                           "field_declaration" "template_declaration")))
+               t)))
+    (unless func (user-error "No function at point"))
+    ;; Anchor the comment above any enclosing template_declaration(s).
+    (let ((anchor func))
+      (while (and (treesit-node-parent anchor)
+                  (equal (treesit-node-type (treesit-node-parent anchor))
+                         "template_declaration"))
+        (setq anchor (treesit-node-parent anchor)))
+    (let* ((sig (if (equal (treesit-node-type func) "template_declaration")
+                    (treesit-search-subtree
+                     func "\\`\\(function_definition\\|declaration\\|field_declaration\\)\\'")
+                  func))
+           (fdecl (treesit-search-subtree (or sig func) "\\`function_declarator\\'"))
+           (fname (and fdecl (treesit-node-child-by-field-name fdecl "declarator")))
+           (rtype-node (and sig (treesit-node-child-by-field-name sig "type")))
+           ;; Span type..name to keep pointer/reference tokens (e.g. "Foo*").
+           (rtype (and rtype-node fname
+                       (string-trim (buffer-substring-no-properties
+                                     (treesit-node-start rtype-node)
+                                     (treesit-node-start fname)))))
+           (params (and fdecl (my/doxygen--param-names fdecl)))
+           (start (treesit-node-start anchor))
+           (col (save-excursion (goto-char start) (back-to-indentation) (current-column)))
+           (pad (make-string col ?\s))
+           (lines (list (concat pad "/**")
+                        (concat pad " * @brief "))))
+      (unless fdecl (user-error "No function signature found"))
+      (dolist (p params)
+        (unless (string-empty-p p)
+          (setq lines (append lines (list (concat pad " * @param " p " "))))))
+      (when (and rtype (not (member rtype '("void" ""))))
+        (setq lines (append lines (list (concat pad " * @return " rtype)))))
+      (setq lines (append lines (list (concat pad " */"))))
+      (goto-char start)
+      (beginning-of-line)
+      (insert (mapconcat #'identity lines "\n") "\n")
+      ;; leave point at the end of the @brief line
+      (forward-line (- (1- (length lines))))
+      (end-of-line)))))
+
+(with-eval-after-load 'c-ts-mode
+  (general-define-key
+    :states '(normal)
+    :prefix "SPC"
+    "n g" 'my/doxygen-comment
+    )
+  )
 
 (use-package tuareg
   :ensure t

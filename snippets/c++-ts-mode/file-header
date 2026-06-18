@@ -1,10 +1,23 @@
 # -*- mode: snippet -*-
-# name: cpp-header
-# key: hdr
+# name: file-header
+# key: header
 # --
-/*
- * File: `(file-name-nondirectory (or (buffer-file-name) ""))`
- * Copyright (c) `(format-time-string "%Y")` ${1:Your Name}
- *
- * $0
+/**
+ * @file `(file-name-nondirectory (or (buffer-file-name) (buffer-name)))`
+ * @brief $1
+ * @copyright (c) `(format-time-string "%Y")` Kinova Incorporated. All rights reserved.
  */
+
+`(let ((ext (file-name-extension (or (buffer-file-name) "")))
+       (macro (upcase (concat "_RCL_" (replace-regexp-in-string "-" "_" (file-name-base (or (buffer-file-name) (buffer-name)))) "_H"))))
+   (if (member ext '("h" "hpp" "hxx" "H"))
+       (concat "#ifndef " macro "\n#define " macro "\n")
+     ""))`
+$0
+
+`(let ((ext (file-name-extension (or (buffer-file-name) "")))
+       (macro (upcase (concat "_RCL_" (replace-regexp-in-string "-" "_" (file-name-base (or (buffer-file-name) (buffer-name)))) "_H"))))
+   (if (member ext '("h" "hpp" "hxx" "H"))
+       (concat "\n#endif /* " macro " */")
+     ""))`
+
