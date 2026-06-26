@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t; -*-
+
 (setq load-prefer-newer t) ;; load latest version of bytecompiled files
 (setq native-comp-jit-compilation t) ;; enable native compilation
 

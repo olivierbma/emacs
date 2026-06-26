@@ -1,4 +1,15 @@
+;;; -*- lexical-binding: t; -*-
 ;; basic variables definitions here
+
+;; todo
+;; - avy  +
+;; - consult-dir -
+;; - Popper +
+;; - quickrun -
+;; - ace-window
+;; - Perspective
+;; - Expreg
+
 
 (tool-bar-mode -1)  ; hide the icons
 (scroll-bar-mode -1); hide scrollbar
@@ -11,6 +22,8 @@
 (setq read-process-output-max (* 8 1024 1024)) ; 8MB
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (setq gc-cons-threshold (* 50 1024 1024)) ;; 50 MB
+
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
 
 
 ;; setting of package manager
@@ -44,54 +57,88 @@
   (exec-path-from-shell-initialize)
   )
 
-(setq ediff-window-setup-function 'ediff-setup-windows-plain)
-
-(use-package vdiff
+(use-package ediff
   :ensure t
-  :defer t
-  :config
-  ;; Like ediff, automatically refine every hunk so the exact words that
-  ;; changed within a line are highlighted (not just the whole changed line).
-  (setq vdiff-auto-refine t)
-  ;; The bindings below live in an evil auxiliary keymap on the vdiff-mode
-  ;; minor mode. evil only rebuilds its active keymaps on a state change, and
-  ;; vdiff enables the minor mode *after* the buffer is already in normal
-  ;; state, so the "," prefix wouldn't activate until you refocused the window
-  ;; (e.g. by clicking). Normalizing on the hook makes it work immediately.
-  (add-hook 'vdiff-mode-hook #'evil-normalize-keymaps)
-  ;; Evil keybinds for vdiff-mode (the local minor mode in diff buffers).
-  ;; Bind the whole vdiff command set under "," and add vim-diff-style
-  ;; direct keys for the common PR-review actions.
-  (general-define-key
-   :states 'normal
-   :keymaps 'vdiff-mode-map
-   ","   vdiff-mode-prefix-map      ; all vdiff commands under the comma prefix
-   "q"   'vdiff-quit                ; quit the diff and return to the ztree menu
-   "]c"  'vdiff-next-hunk           ; jump to next change (like vim diff)
-   "[c"  'vdiff-previous-hunk       ; jump to previous change
-   "gs"  'vdiff-send-changes        ; push this hunk to the other buffer
-   "gr"  'vdiff-receive-changes     ; pull the other buffer's hunk into this one
-   "gf"  'vdiff-refine-this-hunk    ; word-level refinement for this hunk
-   "zo"  'vdiff-open-fold           ; reveal context folded around a hunk (vim fold key)
-   "zc"  'vdiff-close-fold          ; fold context back up (vim fold key)
-   "zR"  'vdiff-open-all-folds
-   "zM"  'vdiff-close-all-folds)
-  ;; The default vdiff faces just inherit from diff-added/changed/removed,
-  ;; which doom-challenger-deep renders too subtly to see. Give them explicit
-  ;; backgrounds from the challenger-deep palette so changes pop. The refine
-  ;; faces highlight the exact words that changed within a hunk, so make them
-  ;; the brightest.
-  ;; (custom-set-faces
-  ;;  '(vdiff-addition-face    ((t (:background "#1f4636" :foreground "#62d196"))))
-  ;;  '(vdiff-subtraction-face ((t (:background "#4a2230" :foreground "#ff5458"))))
-  ;;  '(vdiff-change-face      ((t (:background "#33335a" :foreground "#65b2ff"))))
-  ;;  '(vdiff-refine-added     ((t (:background "#2f7d54" :foreground "#ffffff" :weight bold))))
-  ;;  '(vdiff-refine-changed   ((t (:background "#4f4fa0" :foreground "#ffffff" :weight bold)))))
+  :custom
+  (ediff-window-setup-function 'ediff-setup-windows-plain)
   )
 
-(defvar ab/ztree-vdiff-window-config nil
-  "Window configuration saved before launching vdiff from ztree-diff.
-Restored on vdiff quit so we return to the ztree-diff menu.")
+(use-package general
+  :ensure t
+  :demand t
+  )
+
+(use-package majutsu
+  :straight (:host github :repo "0WD0/majutsu")
+:preface
+  ;; --- jj annotate (blame) for the current line ---
+  (define-derived-mode jj-annotate-mode special-mode "jj-annotate"
+    "Major mode for `jj file annotate' output.")
+
+  (defun jj-annotate-line ()
+    "Run `jj file annotate' on the current file and jump to the current line."
+    (interactive)
+    (unless buffer-file-name
+      (user-error "Buffer is not visiting a file"))
+    (let* ((line (line-number-at-pos))
+           (file buffer-file-name)
+           (default-directory (or (locate-dominating-file file ".jj")
+                                  default-directory))
+           (outbuf (get-buffer-create "*jj annotate*")))
+      (with-current-buffer outbuf
+        (let ((inhibit-read-only t))
+          (erase-buffer)
+          (call-process "jj" nil outbuf nil "file" "annotate" file)
+          (goto-char (point-min))
+          (forward-line (1- line))
+          (jj-annotate-mode)))
+      (pop-to-buffer outbuf)
+      (with-selected-window (get-buffer-window outbuf)
+        (recenter))))
+
+  :general
+  ;; leader: SPC j b  ->  jj annotate current line
+  (:states '(normal visual)
+   :keymaps 'override
+   :prefix "SPC"
+   "j"  '(:ignore t :which-key "jj")
+   "j a" #'jj-annotate-line
+   "j j" 'majutsu)
+  )
+
+;; (use-package vdiff
+;;   :ensure t
+;;   :defer t
+;;   :custom
+;;   (vdiff-diff-algorithm 'git-diff-histogram)
+;;   (vdiff-subtraction-style 'full)
+;;   (vdiff-auto-refine t)
+;;   (vdiff-lock-scrolling t)
+;;   (vdiff-disable-folding t)
+;;   :config
+;;   (add-hook 'vdiff-mode-hook #'evil-normalize-keymaps)
+;;   ;; Evil keybinds for vdiff-mode (the local minor mode in diff buffers).
+;;   ;; Bind the whole vdiff command set under "," and add vim-diff-style
+;;   ;; direct keys for the common PR-review actions.
+;;   (general-define-key
+;;    :states 'normal
+;;    :keymaps 'vdiff-mode-map
+;;    ","   vdiff-mode-prefix-map      ; all vdiff commands under the comma prefix
+;;    "q"   'vdiff-quit                ; quit the diff and return to the ztree menu
+;;    "]c"  'vdiff-next-hunk           ; jump to next change (like vim diff)
+;;    "[c"  'vdiff-previous-hunk       ; jump to previous change
+;;    "gs"  'vdiff-send-changes        ; push this hunk to the other buffer
+;;    "gr"  'vdiff-receive-changes     ; pull the other buffer's hunk into this one
+;;    "gf"  'vdiff-refine-this-hunk    ; word-level refinement for this hunk
+;;    "zo"  'vdiff-open-fold           ; reveal context folded around a hunk (vim fold key)
+;;    "zc"  'vdiff-close-fold          ; fold context back up (vim fold key)
+;;    "zR"  'vdiff-open-all-folds
+;;    "zM"  'vdiff-close-all-folds)
+;;   )
+
+;; (defvar ab/ztree-vdiff-window-config nil
+;;   "Window configuration saved before launching vdiff from ztree-diff.
+;; Restored on vdiff quit so we return to the ztree-diff menu.")
 
 (use-package ztree
   :ensure t
@@ -105,14 +152,14 @@ Restored on vdiff quit so we return to the ztree-diff menu.")
   ;; Capture the ztree window layout first and restore it via vdiff's on-quit
   ;; callback, so quitting the diff (q / ,q) drops you back into the ztree menu
   ;; just like the original ediff hooks did.
-  (advice-add 'ztree-diff-ediff :override
-              (lambda (file-a file-b &optional _startup-hooks)
-                (setq ab/ztree-vdiff-window-config (current-window-configuration))
-                (vdiff-files file-a file-b nil
-                             (lambda (&rest _buffers)
-                               (when ab/ztree-vdiff-window-config
-                                 (set-window-configuration
-                                  ab/ztree-vdiff-window-config))))))
+  ;; (advice-add 'ztree-diff-ediff :override
+  ;;             (lambda (file-a file-b &optional _startup-hooks)
+  ;;               (setq ab/ztree-vdiff-window-config (current-window-configuration))
+  ;;               (vdiff-files file-a file-b nil
+  ;;                            (lambda (&rest _buffers)
+  ;;                              (when ab/ztree-vdiff-window-config
+  ;;                                (set-window-configuration
+  ;;                                 ab/ztree-vdiff-window-config))))))
   (general-setq evil-motion-state-modes (append evil-motion-state-modes '(ztree-mode)))
   ;; ztreediff-mode is a *major* mode (define-derived-mode), so hook it
   ;; directly rather than guarding ztree-mode-hook on a nonexistent variable.
@@ -147,12 +194,21 @@ Restored on vdiff quit so we return to the ztree-diff menu.")
   :config
   (ghostel-compile-global-mode t)
   )
+
+(use-package evil-ghostel
+  :after (ghostel evil)
+  :hook (ghostel-mode . evil-ghostel-mode))
+
+(use-package ghostel-compile
+  :straight nil
+  :hook (after-init . ghostel-compile-global-mode)
+  )
+
 (use-package claude-code-ide
   :straight (:type git :host github :repo "manzaltu/claude-code-ide.el")
-  :init
-
-  (setq claude-code-ide-terminal-backend 'ghostel)
-
+  :custom
+  (claude-code-ide-terminal-backend 'ghostel)
+  (claude-code-ide-show-claude-window-in-ediff nil)
   :config
   (claude-code-ide-emacs-tools-setup)
   ) ; Optionally enable Emacs MCP tools
@@ -201,6 +257,7 @@ Restored on vdiff quit so we return to the ztree-diff menu.")
 
 
 
+
 ;; vim like navigation keymap
 (use-package evil
   :demand t ; no lazy load
@@ -215,6 +272,20 @@ Restored on vdiff quit so we return to the ztree-diff menu.")
    "gc" 'my/toggle-comment
    )
   (evil-mode 1)
+  )
+
+
+(use-package devdocs
+  :ensure t
+  :general
+  ("C-h D" 'devdocs-lookup)
+  (:keymaps 'devdocs-mode-map
+   :states 'normal
+   "H" 'devdocs-go-back
+   "L" 'devdocs-go-forward
+   "TAB" 'forward-button
+   "S-TAB" 'backward-button
+   "RET" 'push-button)
   )
 
 (with-eval-after-load 'evil
@@ -255,6 +326,7 @@ Restored on vdiff quit so we return to the ztree-diff menu.")
   (add-to-list 'recentf-exclude
                (concat "\\`" (regexp-quote (expand-file-name temporary-file-directory)))))
 
+
 (use-package msgu
   :straight (msgu :type git :host github :repo "jcs-elpa/msgu"
                        :files (:defaults "msgu.el"))
@@ -269,16 +341,7 @@ Restored on vdiff quit so we return to the ztree-diff menu.")
 
 (use-package magit
   :ensure t
-  ;; :defer t
-  :init
-  (general-define-key
-   :prefix "SPC"
-   :states '(normal)
-   "m g" 'magit
-   "m f" 'magit-fetch
-   "m c" 'magit-commit
-   )
-
+  :defer t
   )
 
 
@@ -298,7 +361,7 @@ Restored on vdiff quit so we return to the ztree-diff menu.")
   :defer t
   :ensure t
   :init
-  (setq initial-buffer-choice 'dashboard-open)
+  ;; (setq initial-buffer-choice 'dashboard-open)
   :config
   ;; Set projectile as the projects backend
   (setq dashboard-projects-backend 'projectile)
@@ -337,11 +400,9 @@ Restored on vdiff quit so we return to the ztree-diff menu.")
 
     "q" 'quit-window
    )
-
   ;; Initialize dashboard (this also tries to set up startup)
+  :init
   (dashboard-setup-startup-hook)
-
-
   )
 
 
@@ -373,17 +434,8 @@ Restored on vdiff quit so we return to the ztree-diff menu.")
 (use-package vc-jj
   :ensure t
   :defer t
-  :init
   )
 
-(use-package jj-mode
-  :ensure t
-  :defer t
-  :straight (:host github :repo "bolivier/jj-mode.el")
-  ;; :after magit
-  :init
-  (require 'magit)
-  )
 
 (use-package git-gutter
   :ensure t

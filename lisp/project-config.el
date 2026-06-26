@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t; -*-
+
 (require 'general)
 
 (use-package consult
@@ -20,7 +22,7 @@
    "s r" 'consult-projectile-recentf
    "s f" 'my/smart-file-search
    "s g" 'consult-ripgrep
-   "s m" 'consult-man
+   "s m" 'devdocs-lookup
    "p i" 'projectile-project-info
    "p c" 'projectile-compile-project
    "p r" 'projectile-run-project
@@ -58,8 +60,10 @@
   "Use consult-projectile if in a project, otherwise use consult-find."
   (interactive)
   (if (projectile-project-p)
-      (consult-projectile)
-    (consult-fd default-directory)))
+      (projectile-find-file projectile-project-root)
+      ;; (consult-projectile-find-file)
+    (consult-fd default-directory))
+  )
 
 
 (provide 'project-config)

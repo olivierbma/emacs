@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t; -*-
+
 ;;; typst-preview.el --- Live preview of typst -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023 Håvard Damm-Johnsen
