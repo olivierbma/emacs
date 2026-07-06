@@ -7,7 +7,7 @@
 (push '(tool-bar-line . 0) default-frame-alist)
 (push '(vertical-scroll-bars) default-frame-alist)
 
-(setq package-enable-at-startup nil) 
+(setq package-enable-at-startup nil)
 
 (setq native-comp-speed 2)
 (setenv "LSP_USE_PLISTS" "true")

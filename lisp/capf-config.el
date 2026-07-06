@@ -4,56 +4,43 @@
 
 (require 'nerd-icons)
 
-(use-package yasnippet
-  :ensure t
-  :config
-  (yas-global-mode 1))
+(use-package yasnippet :ensure t :config (yas-global-mode 1))
 
-(use-package eldoc
-  :ensure t
-  :init
-  (global-eldoc-mode 1))
+(use-package eldoc :ensure t :init (global-eldoc-mode 1))
 
-(use-package eldoc-box
-  :ensure t
-  :config
-  )
+(use-package eldoc-box :ensure t :config)
 
 ;; Vertico: A simple and efficient minibuffer completion
-(use-package vertico
-  :ensure t
-  :init
-  (vertico-mode)
-  :hook
-  (after-init . vertico-mode)
-  )
+(use-package
+ vertico
+ :ensure t
+ :init (vertico-mode)
+ :hook (after-init . vertico-mode)
+ :general
+ (:keymaps
+  '(vertico-map) "C-j" 'vertico-next "C-k" 'vertico-previous))
 
 ;; Marginalia: Add helpful annotations to completion candidates
-(use-package marginalia
-  :ensure t
-  :straight t
-  :init
-  (marginalia-mode)
-  :hook
-  (after-init . marginalia-mode))
+(use-package
+ marginalia
+ :ensure t
+ :straight t
+ :init (marginalia-mode)
+ :hook (after-init . marginalia-mode))
 
 ;; Orderless: Flexible, order-independent matching style
-(use-package orderless
-  :ensure t
-  :defer t
-  :custom
-  ;;  orderless-flex
-  (orderless-matching-styles '(orderless-literal orderless-regexp))
-  (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles partial-completion))
-                                    )
-    )
-  )
+(use-package
+ orderless
+ :ensure t
+ :defer t
+ :custom
+ ;;  orderless-flex
+ (orderless-matching-styles '(orderless-literal orderless-regexp))
+ (completion-styles '(orderless basic))
+ (completion-category-overrides
+  '((file (styles partial-completion)))))
 
-(use-package affe
-  :ensure t
-  :defer t
-  )
+(use-package affe :ensure t :defer t)
 
 ;; NOTE: completion is now handled by lsp-bridge's own frontend (acm),
 ;; see lisp/languages-config.el. corfu is left configured but no longer
@@ -93,20 +80,19 @@
 ;;   )
 
 
-
 ;; (use-package nerd-icons-corfu
 ;;   :ensure t
 ;;   :defer t
 ;;   )
 
 
-(use-package cape
-  :ensure t
-  :defer t
-  :init
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  )
+(use-package
+ cape
+ :ensure t
+ :defer t
+ :init (add-to-list 'completion-at-point-functions #'cape-file)
+ ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+ )
 
 
 (provide 'capf-config)
