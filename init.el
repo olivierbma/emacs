@@ -3,7 +3,6 @@
 
 ;; todo
 ;; - Popper +
-;; - ace-window
 ;; - Perspective
 ;; - Purpose
 ;; - Expreg
@@ -61,6 +60,16 @@
 
 (use-package general :ensure t :demand t)
 
+;; Single source of truth for the leader key. :keymaps 'override binds into
+;; general-override-mode-map, a global minor mode with very high priority in
+;; emulation-mode-map-alist, so the leader always fires regardless of major
+;; mode or which evil state the buffer happens to be in.
+(general-create-definer
+ my/leader
+ :states '(normal visual motion emacs)
+ :keymaps 'override
+ :prefix "SPC")
+
 (use-package
  majutsu
  :straight (:host github :repo "0WD0/majutsu")
@@ -94,29 +103,19 @@
        (recenter))))
 
  :general
- ;; leader: SPC j b  ->  jj annotate current line
- (:states
-  '(normal visual)
-  :keymaps 'override
-  :prefix
-  "SPC"
-  "j"
-  '(:ignore t :which-key "jj")
-  "j a"
-  #'jj-annotate-line
-  "j j"
-  'majutsu))
+ (my/leader
+  "j" '(:ignore t :which-key "jj")
+  "j a" #'jj-annotate-line ;; jj annotate current line
+  "j j" 'majutsu))
 
 (use-package
  avy
  :defer t
  :ensure t
  :general
- (:states
-  '(normal)
-  :keymaps 'override
-  :prefix
-  "SPC"
+ (my/leader
+  "a"
+  '(:ignore t :which-key "avy")
   "a w"
   'evil-avy-goto-word-1
   "a c"
@@ -167,14 +166,7 @@
        (dirvish-quit)
      (dirvish)))
 
- :general
- (:states
-  '(normal)
-  :keymaps '(override)
-  :prefix
-  "SPC"
-  "`"
-  'my/toggle-dirvish))
+ :general (my/leader "`" 'my/toggle-dirvish))
 
 (use-package ghostel :ensure t :defer t)
 
@@ -239,10 +231,7 @@
  evil
  :demand t ; no lazy load
  :ensure t
- :init
- (setq evil-want-integration t)
- (evil-mode 1)
- (evil-set-leader '(normal visual emacs) (kbd "SPC"))
+ :init (setq evil-want-integration t) (evil-mode 1)
  :config
  :general (:states '(normal visual) :prefix "" "g c" 'my/toggle-comment))
 
@@ -251,6 +240,12 @@
  devdocs
  :defer t
  :ensure t
+ :hook
+ (c++-ts-mode
+  . (lambda () (setq-local devdocs-current-docs '("cpp"))))
+
+ (emacs-lisp-mode
+  . (lambda () (setq-local devdocs-current-docs '("elisp"))))
  :general
  (:keymaps
   'devdocs-mode-map
@@ -426,32 +421,40 @@
     compilation-mode
     ghostel-mode
     majutsu-log-mode
+    ghostel-compile-view-mode
     devdocs-mode))
  (popper-display-control nil)
  :general
- (:prefix
-  "SPC"
-  :states '(normal visual motion emacs)
-  :keymaps
-  'override
-  "p p"
+ (my/leader
+  "w"
+  '(:ignore t :which-key "window/popup")
+  "w p"
   'popper-toggle
-  "p n" 'popper-cycle
-  "p N" 'popper-cycle-backwards
-  "p k" 'popper-kill-latest-popup
-  )
+  "w n"
+  'popper-cycle
+  "w N"
+  'popper-cycle-backwards
+  "w k"
+  'popper-kill-latest-popup)
  :init (popper-mode +1) (popper-echo-mode +1))
+
+(use-package
+ ace-window
+ :ensure t
+ :defer t
+ :custom (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+ :general
+ (my/leader
+  "w w" 'ace-window "w s" 'ace-swap-window "w d" 'ace-delete-window))
 
 (use-package
  evil-goggles
  :ensure t
- :defer t
+ :demand t
  :custom
- (evil-goggles-blocking-duration 0.20)
- (evil-goggles-async-duration 0.90)
- :config
- (evil-goggles-mode)
- (evil-goggles-use-diff-faces))
+ (evil-goggles-blocking-duration 0.10)
+ (evil-goggles-async-duration 0.50)
+ :config (evil-goggles-mode) (evil-goggles-use-diff-faces))
 
 (use-package
  silicon
@@ -545,13 +548,10 @@ With a universal argument, prompt for options or let you edit them manually."
 (require 'dap-config)
 
 
-(general-define-key
- :states '(normal)
- :prefix "SPC"
- :keymaps
- '(general-default-keymaps
-   dired-mode-map compilation-mode-map emacs-lisp-compilation-mode)
- "s b"
+(my/leader
+ "b"
+ '(:ignore t :which-key "buffer")
+ "b b"
  'consult-buffer
  "b k"
  'kill-current-buffer

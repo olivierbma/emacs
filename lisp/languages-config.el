@@ -125,10 +125,9 @@ tree-sitter parse tree."
 (with-eval-after-load 'c-ts-mode
   (general-define-key
    :states '(normal)
-   :prefix
-   "SPC"
-   "n g"
-   'my/doxygen-comment))
+   :keymaps 'c-ts-mode-map
+   :prefix "SPC"
+   "c d" 'my/doxygen-comment))
 
 
 (use-package sly :ensure t :defer t)
@@ -184,40 +183,32 @@ tree-sitter parse tree."
  ;; RET still accepts the selected candidate (acm default).
 
  :general
- (:states
-  '(normal)
-  :prefix "SPC"
+ (my/leader
+  "g" '(:ignore t :which-key "goto")
+  "g d" 'lsp-bridge-find-def
+  "g i" 'lsp-bridge-find-impl
+  "g r" 'lsp-bridge-find-references
 
-  "g d"
-  'lsp-bridge-find-def
-  "g i"
-  'lsp-bridge-find-impl
-  "g r"
-  'lsp-bridge-find-references
-  "c a"
-  'lsp-bridge-code-action
-  "r n"
-  'lsp-bridge-rename
-  "k"
-  'lsp-bridge-popup-documentation
-  "s d"
-  'lsp-bridge-diagnostic-list)
+  "c" '(:ignore t :which-key "code")
+  "c a" 'lsp-bridge-code-action
+  "c r" 'lsp-bridge-rename
+  "c f" 'my/format-buffer
+
+  "s d" 'lsp-bridge-diagnostic-list)
  (:states
   '(normal)
   :prefix ""
 
-  "g d"
-  'lsp-bridge-find-def
-  "g r"
-  'lsp-bridge-find-references
-  "C-i"
-  'lsp-bridge-code-format
-  "K"
-  'lsp-bridge-popup-documentation
-  "[d"
-  'lsp-bridge-diagnostic-jump-prev
-  "]d"
-  'lsp-bridge-diagnostic-jump-next))
+  "K" 'lsp-bridge-popup-documentation
+  "[d" 'lsp-bridge-diagnostic-jump-prev
+  "]d" 'lsp-bridge-diagnostic-jump-next))
+
+(defun my/format-buffer ()
+  "Format the current buffer with elisp-autofmt in Emacs Lisp, lsp-bridge otherwise."
+  (interactive)
+  (if (derived-mode-p 'emacs-lisp-mode)
+      (elisp-autofmt-buffer)
+    (lsp-bridge-code-format)))
 
 
 ;; if you are helm user
@@ -232,15 +223,7 @@ tree-sitter parse tree."
  elisp-autofmt
  :ensure t
  :defer t
- :custom (elisp-autofmt-style 'native)
- :general
- (:states
-  '(normal)
-  :keymaps '(emacs-lisp-mode-map)
-  :prefix
-  ""
-  "C-i"
-  'elisp-autofmt-buffer))
+ :custom (elisp-autofmt-style 'native))
 
 (add-hook
  'c++-ts-mode-hook

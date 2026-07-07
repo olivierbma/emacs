@@ -33,41 +33,25 @@
  ;;"SPC SPC" '(projectile-switch-to-buffer :which-key "switch project buffer")
  ;;  "SPC p P" '(projectile-switch-project :which-key "switch project"))
  :general
- (:states
-  '(normal visual emacs)
-  :prefix "" "g p" 'consult-projectile-switch-to-buffer)
- (:prefix
-  "SPC"
-  :states
-  '(normal visual emacs)
-  "s r"
-  'consult-projectile-recentf
-  "s f"
-  'my/smart-file-search
-  "s g"
-  'consult-ripgrep
-  "s m"
-  'devdocs-lookup
-  "p i"
-  'projectile-project-info
-  "p c"
-  'projectile-compile-project
-  "p r"
-  'projectile-run-project
-  "p t"
-  'projectile-test-project
-  "s p"
-  'consult-projectile-switch-project
-  "s o"
-  'consult-outline
-  "g h"
-  'projectile-find-other-file
-  "/"
-  'consult-line
-  "<F5>"
-  'projectile-run-project
-  "S-<F5>"
-  'projectile-compile-project))
+ (my/leader
+  "b p" 'consult-projectile-switch-to-buffer ;; buffers in current project
+
+  "p" '(:ignore t :which-key "project")
+  "p i" 'projectile-project-info
+  "p c" 'projectile-compile-project
+  "p r" 'projectile-run-project
+  "p t" 'projectile-test-project
+
+  "s" '(:ignore t :which-key "search")
+  "s r" 'consult-projectile-recentf
+  "s f" 'my/smart-file-search
+  "s g" 'consult-ripgrep
+  "s m" 'devdocs-lookup
+  "s p" 'consult-projectile-switch-project
+  "s o" 'consult-outline
+  "/" 'consult-line
+
+  "g h" 'projectile-find-other-file))
 
 (defun my/smart-file-search ()
   "Use consult-projectile if in a project, otherwise use consult-find."
