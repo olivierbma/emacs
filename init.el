@@ -2,10 +2,10 @@
 ;; basic variables definitions here
 
 ;; todo
-;; - consult-dir -
 ;; - Popper +
 ;; - ace-window
 ;; - Perspective
+;; - Purpose
 ;; - Expreg
 
 
@@ -413,16 +413,45 @@
  :defer t
  :init (global-git-gutter-mode +1))
 
-(use-package evil-goggles
-  :ensure t
-  :defer t
-  :defer t
-  :custom
-  (evil-goggles-blocking-duration 0.20)
-  (evil-goggles-async-duration 0.90)
-  :config
-  (evil-goggles-mode)
-  (evil-goggles-use-diff-faces))
+(use-package
+ popper
+ :ensure t
+ :defer t
+ :custom
+ (popper-reference-buffers
+  '("\\*Messages\\*"
+    "Output\\*$"
+    "\\*Async Shell Command\\*"
+    help-mode
+    compilation-mode
+    ghostel-mode
+    majutsu-log-mode
+    devdocs-mode))
+ (popper-display-control nil)
+ :general
+ (:prefix
+  "SPC"
+  :states '(normal visual motion emacs)
+  :keymaps
+  'override
+  "p p"
+  'popper-toggle
+  "p n" 'popper-cycle
+  "p N" 'popper-cycle-backwards
+  "p k" 'popper-kill-latest-popup
+  )
+ :init (popper-mode +1) (popper-echo-mode +1))
+
+(use-package
+ evil-goggles
+ :ensure t
+ :defer t
+ :custom
+ (evil-goggles-blocking-duration 0.20)
+ (evil-goggles-async-duration 0.90)
+ :config
+ (evil-goggles-mode)
+ (evil-goggles-use-diff-faces))
 
 (use-package
  silicon
