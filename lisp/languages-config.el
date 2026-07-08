@@ -1,13 +1,29 @@
 ;;; -*- lexical-binding: t; -*-
 
+;; Must be loaded before treesit-auto's :config below runs, since
+;; `treesit-auto-add-to-auto-mode-alist' only registers a language
+;; if its ts-mode function is already `fboundp' at that point.
+(use-package nix-ts-mode
+  :ensure t
+  :defer t
+  )
+(use-package typst-ts-mode
+  :ensure t
+  :defer t)
+
 (use-package
  treesit-auto
  :ensure t
  :demand t
+ :after (nix-ts-mode typst-ts-mode)
  :custom (treesit-auto-install 'prompt)
  :config
  (treesit-auto-add-to-auto-mode-alist 'all)
  (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
+ ;; cmake-ts-mode's own CMakeLists.txt entry (in Emacs core) only
+ ;; takes effect once the file has been loaded, which doesn't happen
+ ;; from just an autoload; register it explicitly here instead.
+ (add-to-list 'auto-mode-alist '("CMakeLists\\.txt\\'" . cmake-ts-mode))
  (global-treesit-auto-mode))
 
 
@@ -159,6 +175,8 @@ tree-sitter parse tree."
  lsp-bridge
  :load-path "~/.emacs.d/vendor/lsp-bridge"
  :demand t
+ :hook
+ (lsp-bridge-mode . lsp-bridge-semantic-tokens-mode)
  :init
  ;; The Python backend runs through the repo's `python-lsp-bridge' uv
  ;; wrapper, symlinked into ~/.local/bin. lsp-bridge auto-detects that

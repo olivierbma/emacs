@@ -18,7 +18,7 @@
 (setq gc-cons-threshold (* 50 1024 1024)) ;; 50 MB
 (setq global-auto-revert-mode t)
 
-(add-to-list 'default-frame-alist '(fullscreen . maximized))
+;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
 
 ;; setting of package manager
@@ -397,7 +397,7 @@
 ;;   )
 ;; (:url :branch :lisp-dir :main-file :vc-backend :rev :shell-command :make :ignored-files)
 
-(use-package vc-jj :ensure t :defer t)
+;; (use-package vc-jj :ensure t :defer t)
 
 
 (use-package
@@ -441,7 +441,8 @@
  expreg
  :ensure t
  :defer t
- :general (my/leader :prefix "" "C-l" 'expreg-expand "C-h" 'expreg-contract))
+ :general
+ (my/leader :prefix "" "C-l" 'expreg-expand "C-h" 'expreg-contract))
 
 (use-package
  ace-window
@@ -450,7 +451,7 @@
  :custom (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
  :general
  (my/leader
-  "w w" 'ace-window "w s" 'ace-swap-window "w d" 'ace-delete-window))
+  "f f" 'ace-window "f s" 'ace-swap-window "f d" 'ace-delete-window))
 
 (use-package
  evil-goggles
