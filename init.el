@@ -2,10 +2,7 @@
 ;; basic variables definitions here
 
 ;; todo
-;; - Popper +
 ;; - Perspective
-;; - Purpose
-;; - Expreg
 
 
 (tool-bar-mode -1) ; hide the icons
@@ -19,6 +16,7 @@
 (setq read-process-output-max (* 8 1024 1024)) ; 8MB
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (setq gc-cons-threshold (* 50 1024 1024)) ;; 50 MB
+(setq global-auto-revert-mode t)
 
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
@@ -116,9 +114,9 @@
  (my/leader
   "a"
   '(:ignore t :which-key "avy")
-  "a w"
+  "a a"
   'evil-avy-goto-word-1
-  "a c"
+  "a l"
   'evil-avy-goto-char))
 
 
@@ -426,17 +424,24 @@
  (popper-display-control nil)
  :general
  (my/leader
-  "w"
-  '(:ignore t :which-key "window/popup")
-  "w p"
+  "f"
+  '(:ignore t :which-key "popup/[F]enêtre")
+  "f p"
   'popper-toggle
-  "w n"
+  "f n"
   'popper-cycle
-  "w N"
+  "f N"
   'popper-cycle-backwards
-  "w k"
+  "f k"
   'popper-kill-latest-popup)
  :init (popper-mode +1) (popper-echo-mode +1))
+
+
+(use-package
+ expreg
+ :ensure t
+ :defer t
+ :general (my/leader :prefix "" "C-l" 'expreg-expand "C-h" 'expreg-contract))
 
 (use-package
  ace-window
@@ -454,7 +459,9 @@
  :custom
  (evil-goggles-blocking-duration 0.10)
  (evil-goggles-async-duration 0.50)
- :config (evil-goggles-mode) (evil-goggles-use-diff-faces))
+ :config
+ (evil-goggles-mode)
+ (evil-goggles-use-diff-faces))
 
 (use-package
  silicon
