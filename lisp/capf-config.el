@@ -10,6 +10,11 @@
 
 (use-package eldoc-box :ensure t :config)
 
+;; Stack *Completions* vertically instead of laying it out as a grid.  This is
+;; what `completion-at-point' prompts use -- notably evil's `:' ex line, which
+;; reads via `read-from-minibuffer' and so never gets the vertico UI.
+(setq completions-format 'one-column)
+
 ;; Vertico: A simple and efficient minibuffer completion
 (use-package
  vertico

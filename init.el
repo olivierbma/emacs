@@ -1,9 +1,6 @@
 ;;; -*- lexical-binding: t; -*-
 ;; basic variables definitions here
 
-;; todo
-;; - Perspective
-
 
 (tool-bar-mode -1) ; hide the icons
 (scroll-bar-mode -1) ; hide scrollbar
@@ -12,11 +9,10 @@
 (setq scroll-margin 8)
 (setq scroll-conservatively 10000)
 
-(setq backup-directory-alist `(("." "~/.emacs.d/.saves")))
+(setq backup-directory-alist '(("." . "~/.emacs.d/.saves")))
 (setq read-process-output-max (* 8 1024 1024)) ; 8MB
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (setq gc-cons-threshold (* 50 1024 1024)) ;; 50 MB
-(setq global-auto-revert-mode t)
 
 ;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
@@ -128,14 +124,6 @@
  (evil-motion-state-modes
   (append evil-motion-state-modes '(ztree-mode)))
  :init (setq ztree-draw-unicode-lines t)
- :hook
- (ztreediff-mode
-  .
-  (lambda ()
-    (hl-line-mode 1)
-    ;; Keep highlighting visible above ztree's colorful diff states
-    (make-local-variable 'hl-line-overlay-priority)
-    (setq hl-line-overlay-priority 1)))
  :general
  (:states
   '(motion)
@@ -166,7 +154,7 @@
 
  :general (my/leader "`" 'my/toggle-dirvish))
 
-(use-package ghostel :ensure t :defer t)
+(use-package ghostel :ensure t :defer t :custom (ghostel-shell "nu"))
 
 (use-package
  evil-ghostel
@@ -212,7 +200,7 @@
  (setq default-process-coding-system '(utf-8-unix . utf-8-unix))
  (setq-default indent-tabs-mode nil)
  (setq-default tab-width 2)
- (set-face-attribute 'default nil)
+ ;; (set-face-attribute 'default nil)
  (set-face-attribute 'default nil
                      :font "CaskaydiaCove Nerd Font"
                      :height 120)
@@ -221,7 +209,8 @@
    (interactive)
    (display-line-numbers-mode)
    (setq display-line-numbers 'relative))
- (ab/enable-line-numbers))
+ (ab/enable-line-numbers)
+ (electric-pair-mode))
 
 
 ;; vim like navigation keymap
@@ -229,7 +218,11 @@
  evil
  :demand t ; no lazy load
  :ensure t
- :init (setq evil-want-integration t) (evil-mode 1)
+ :custom (evil-want-Y-yank-to-eol t)
+ :init
+ (setq evil-undo-system 'undo-redo)
+ (setq evil-want-integration t)
+ (evil-mode 1)
  :config
  :general (:states '(normal visual) :prefix "" "g c" 'my/toggle-comment))
 
@@ -238,7 +231,7 @@
  devdocs
  :defer t
  :ensure t
- :hook
+ :hook (c++-mode . c++-ts-mode)
  (c++-ts-mode
   . (lambda () (setq-local devdocs-current-docs '("cpp"))))
 
@@ -275,6 +268,17 @@
  doom-themes
  :demand t ;; no lazy load
  :config (load-theme 'doom-challenger-deep t))
+
+(use-package
+ hl-line
+ :ensure nil
+ :hook
+ ((prog-mode text-mode ztree-mode conf-mode typst-ts-mode)
+  .
+  hl-line-mode)
+ ;; Highlight only the line in the focused window, so switching windows or
+ ;; buffers drops the highlight instead of leaving stale lines lit up.
+ :custom (hl-line-sticky-flag nil))
 
 
 (use-package
@@ -386,11 +390,10 @@
  (indent-bars-pattern "|"))
 
 
-(add-hook 'prog-mode-hook 'electric-pair-mode)
+;; (add-hook 'prog-mode-hook 'electric-pair-mode)
 
-(add-hook 'prog-mode-hook #'ab/enable-line-numbers)
+;; (add-hook 'prog-mode-hook #'ab/enable-line-numbers)
 
-(use-package topsy :defer t :ensure t :hook (prog-mode . topsy-mode))
 
 ;; (use-package silicon-el
 ;;   :vc ( :url "https://github.com/iensu/silicon-el" :branch "master" )
@@ -420,6 +423,7 @@
     ghostel-mode
     majutsu-log-mode
     ghostel-compile-view-mode
+    lsp-bridge-ref-mode
     devdocs-mode))
  (popper-display-control nil)
  :general
@@ -463,6 +467,24 @@
  :config
  (evil-goggles-mode)
  (evil-goggles-use-diff-faces))
+
+;; NOTE: the mode must be enabled from :init, not :config.  With
+;; `use-package-always-defer' t and no :demand/:hook/:commands, this block never
+;; loads on its own, so a :config body would never run at all.
+(use-package
+ autorevert
+ :ensure nil
+ :custom
+ ;; Pick up external edits (Claude Code, formatters, jj) quickly.
+ (auto-revert-interval 1)
+ ;; Don't narrate every revert in the echo area.
+ (auto-revert-verbose nil)
+ ;; Also refresh dired/dirvish when files appear or disappear.
+ (global-auto-revert-non-file-buffers t)
+ ;; Leave `auto-revert-avoid-polling' at nil on purpose: inotify watches are
+ ;; bound to the inode, so a tool that writes via temp-file-then-rename can
+ ;; silently invalidate the watch.  Polling is the backstop for that.
+ :init (global-auto-revert-mode 1))
 
 (use-package
  silicon
@@ -568,17 +590,37 @@ With a universal argument, prompt for options or let you edit them manually."
  "b N"
  'evil-prev-buffer)
 
+;; `SPC :' is M-x, so the command menu goes through `completing-read' and picks
+;; up vertico's live list plus marginalia's per-command descriptions.  Plain `:'
+;; is left as evil's ex line for `:w', `:%s/foo/bar/g', ranges and friends -- it
+;; reads via `read-from-minibuffer', which vertico never advises, so it can only
+;; ever do on-demand `completion-at-point'.
+(my/leader ":" 'execute-extended-command)
+
 ;; custom personalization
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("3613617b9953c22fe46ef2b593a2e5bc79ef3cc88770602e7e569bbd71de113b"
+     "13096a9a6e75c7330c1bc500f30a8f4407bd618431c94aeab55c9855731a95e1"
+     "02d422e5b99f54bd4516d4157060b874d14552fe613ea7047c4a5cfa1288cf4f"
+     default))
  '(doom-modeline-buffer-file-name-style 'relative-from-project)
- '(indent-bars-unspecified-bg-color "gray"))
+ '(indent-bars-unspecified-bg-color "gray")
+ '(safe-local-variable-values
+   '((projectile-project-build-cmd . "mise run build_test"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(evil-goggles-change-face ((t (:inherit diff-removed))))
+ '(evil-goggles-delete-face ((t (:inherit diff-removed))))
+ '(evil-goggles-paste-face ((t (:inherit diff-added))))
+ '(evil-goggles-undo-redo-add-face ((t (:inherit diff-added))))
+ '(evil-goggles-undo-redo-change-face ((t (:inherit diff-changed))))
+ '(evil-goggles-undo-redo-remove-face ((t (:inherit diff-removed))))
+ '(evil-goggles-yank-face ((t (:inherit diff-changed)))))
