@@ -169,11 +169,14 @@ tree-sitter parse tree."
  :custom
  (flycheck-display-errors-delay 0.3)
  (flycheck-highlight-mode 'symbols))
-;; lsp-bridge needs markdown-mode (renders documentation popups)
-(use-package markdown-mode :ensure t :defer t
-  :custom
-  (markdown-header-scaling t)
-  (markdown-fontify-code-blocks-natively t))
+
+(use-package
+ markdown-mode
+ :ensure t
+ :defer t
+ :custom
+ (markdown-header-scaling t)
+ (markdown-fontify-code-blocks-natively t))
 ;; lsp-bridge's acm-backend-yas requires yasnippet to be loadable when
 ;; lsp-bridge loads, so make sure it is available (and globally enabled)
 ;; before the lsp-bridge use-package below.
@@ -205,6 +208,10 @@ tree-sitter parse tree."
  (lsp-bridge-ref-delete-other-windows nil)
  (lsp-bridge-nix-lsp-server "nil")
  (lsp-bridge-cmake-lsp-server "neocmakelsp")
+ (acm-enable-icon (display-graphic-p))
+ (acm-enable-yas t)
+ (acm-candidate-match-function 'orderless-flex)
+ (acm-backend-lsp-match-mode "fuzzy")
  :config
  (global-lsp-bridge-mode)
  (define-key acm-mode-map (kbd "TAB") #'acm-select-next)

@@ -204,13 +204,15 @@
  (set-face-attribute 'default nil
                      :font "CaskaydiaCove Nerd Font"
                      :height 120)
- (defun ab/enable-line-numbers ()
+ :preface
+ (defun my/enable-line-numbers ()
    "Enable relative line numbers"
    (interactive)
    (display-line-numbers-mode)
    (setq display-line-numbers 'relative))
- (ab/enable-line-numbers)
- (electric-pair-mode))
+ :hook
+ (prog-mode . my/enable-line-numbers)
+ (prog-mode . electric-pair-mode))
 
 
 ;; vim like navigation keymap
@@ -223,8 +225,13 @@
  (setq evil-undo-system 'undo-redo)
  (setq evil-want-integration t)
  (evil-mode 1)
- :config
  :general (:states '(normal visual) :prefix "" "g c" 'my/toggle-comment))
+
+(use-package  evil-terminal-cursor-changer
+  :ensure t
+  :if (not (display-graphic-p))
+  :init (etcc-on)
+  )
 
 
 (use-package
@@ -390,9 +397,6 @@
  (indent-bars-pattern "|"))
 
 
-;; (add-hook 'prog-mode-hook 'electric-pair-mode)
-
-;; (add-hook 'prog-mode-hook #'ab/enable-line-numbers)
 
 
 ;; (use-package silicon-el
@@ -406,8 +410,52 @@
 (use-package
  git-gutter
  :ensure t
- :defer t
- :init (global-git-gutter-mode +1))
+ :hook (prog-mode . git-gutter-mode)
+ :config (setq git-gutter:update-interval 0.02)
+ ;; Used on TTY frames, where fringes don't exist at all.
+ (setq
+  git-gutter:added-sign "▎"
+  git-gutter:modified-sign "▎"
+  git-gutter:deleted-sign "▁"))
+
+(use-package
+ git-gutter-fringe
+ :ensure t
+ :if (display-graphic-p)
+ :demand t
+ :config
+ (fringe-helper-define
+  'git-gutter-fr:added
+  '(center repeated)
+  "XXX....."
+  "XXX....."
+  "XXX....."
+  "XXX.....")
+ (fringe-helper-define
+  'git-gutter-fr:modified
+  '(center repeated)
+  "XXX....."
+  "XXX....."
+  "XXX....."
+  "XXX.....")
+ (fringe-helper-define
+  'git-gutter-fr:deleted
+  'bottom
+  "X......."
+  "XX......"
+  "XX......"
+  "XXX....."
+  "XXX....."
+  "XXXX...."
+  "XXXXX..."
+  "XXXXXX.."
+  "XXXXX..."
+  "XXXX...."
+  "XXX....."
+  "XXX....."
+  "XX......"
+  "XX......"
+  "X......."))
 
 (use-package
  popper

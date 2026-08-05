@@ -18,9 +18,9 @@
 ;; Vertico: A simple and efficient minibuffer completion
 (use-package
  vertico
+ :demand t
  :ensure t
- :init (vertico-mode)
- :hook (after-init . vertico-mode)
+ :init (vertico-mode +1)
  :general
  (:keymaps
   '(vertico-map) "C-j" 'vertico-next "C-k" 'vertico-previous))
@@ -40,10 +40,22 @@
  :defer t
  :custom
  ;;  orderless-flex
- (orderless-matching-styles '(orderless-literal orderless-regexp))
+ (orderless-matching-styles
+  '(orderless-literal orderless-regexp orderless-flex))
  (completion-styles '(orderless basic))
  (completion-category-overrides
   '((file (styles partial-completion)))))
+
+;; (use-package prescient :ensure t)
+(use-package
+ vertico-prescient
+ :ensure t
+ :demand t
+ :after vertico
+ :custom (vertico-prescient-enable-filtering nil)
+ :config
+ (prescient-persist-mode +1)
+ (vertico-prescient-mode +1))
 
 (use-package affe :ensure t :defer t)
 
