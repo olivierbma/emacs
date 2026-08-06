@@ -109,3 +109,4 @@ projects
 tree-sitter/*
 *.so
 vendor/lsp-bridge/*
+elisp-autofmt-cache/*

@@ -227,11 +227,11 @@
  (evil-mode 1)
  :general (:states '(normal visual) :prefix "" "g c" 'my/toggle-comment))
 
-(use-package  evil-terminal-cursor-changer
-  :ensure t
-  :if (not (display-graphic-p))
-  :init (etcc-on)
-  )
+(use-package
+ evil-terminal-cursor-changer
+ :ensure t
+ :if (not (display-graphic-p))
+ :init (etcc-on))
 
 
 (use-package
@@ -397,8 +397,6 @@
  (indent-bars-pattern "|"))
 
 
-
-
 ;; (use-package silicon-el
 ;;   :vc ( :url "https://github.com/iensu/silicon-el" :branch "master" )
 ;;   )
@@ -538,64 +536,100 @@
  silicon
  :defer t
  :straight (silicon :type git :host github :repo "iensu/silicon-el")
- :config
+ :config (setq silicon-executable-path "silicon")
+ :preface
  (defun silicon-region-to-clipboard
      (start end &optional universal-arg)
    "Copy an image of the selected region between START and END to the clipboard using `silicon`.
 With a universal argument, prompt for options or let you edit them manually."
    (interactive "r\nP")
+   ;; `:preface' is evaluated at init time without loading the package, so pull
+   ;; silicon.el in before touching any of the variables it defines.
+   (require 'silicon)
    (if (not (executable-find silicon-executable-path))
        (error
         "Could not find `silicon` executable, check `silicon-executable-path`.")
 
-     (let* ((region-text (buffer-substring-no-properties start end))
-            (temp-file (make-temp-file "silicon-region" nil ".tmp"))
-            (is-edit (equal universal-arg '(16)))
-            (is-prompt (equal universal-arg '(4)))
-            (options
-             (cond
-              (is-edit
-               (read-string "Options: "
-                            (-silicon--build-command-opts-string)
-                            '-silicon--cmd-options-history
-                            (-silicon--build-command-opts-string)))
-              (is-prompt
-               (let ((theme
-                      (funcall silicon-completion-function
-                               "Theme: "
-                               silicon-available-themes
-                               nil
-                               (not (null silicon-available-themes))
-                               silicon-default-theme))
-                     (background-color
-                      (read-string "Background color: "
-                                   silicon-default-background-color
-                                   '-silicon--background-color-history
-                                   silicon-default-background-color))
-                     (highlight-lines
-                      (read-string "Highlight lines: " nil nil nil))
-                     (show-line-numbers
-                      (yes-or-no-p "Add line numbers? "))
-                     (show-window-controls
-                      (yes-or-no-p "Add window controls? "))
-                     (rounded-corners
-                      (yes-or-no-p "Rounded corners? ")))
-                 (-silicon--build-command-opts-string
-                  :theme theme
-                  :background-color background-color
-                  :highlight-lines
-                  (if (string= "" highlight-lines)
-                      nil
-                    highlight-lines)
-                  :line-numbers show-line-numbers
-                  :window-controls show-window-controls
-                  :rounded-corners rounded-corners)))
-              (t
-               (-silicon--build-command-opts-string))))
+     ;; Snap the region out to whole lines so partial first/last lines are
+     ;; rendered in full.  A region ending at column 0 does not drag in the
+     ;; line below it.
+     (let*
+         ((start
+           (save-excursion
+             (goto-char start)
+             (line-beginning-position)))
+          (end
+           (save-excursion
+             (goto-char end)
+             (when (and (> end start) (bolp))
+               (forward-char -1))
+             (line-end-position)))
+          (region-text (buffer-substring-no-properties start end))
+          ;; silicon infers the language from the file extension, so hand it
+          ;; the buffer's own suffix instead of a generic one.
+          (temp-file
+           (make-temp-file "silicon-region"
+                           nil
+                           (let ((ext
+                                  (and buffer-file-name
+                                       (file-name-extension
+                                        buffer-file-name))))
+                             (if ext
+                                 (concat "." ext)
+                               ".txt"))))
+          (is-edit (equal universal-arg '(16)))
+          (is-prompt (equal universal-arg '(4)))
+          (options
+           (cond
+            (is-edit
+             (read-string "Options: "
+                          (-silicon--build-command-opts-string)
+                          '-silicon--cmd-options-history
+                          (-silicon--build-command-opts-string)))
+            (is-prompt
+             (let ((theme
+                    (funcall silicon-completion-function
+                             "Theme: "
+                             silicon-available-themes
+                             nil
+                             (not (null silicon-available-themes))
+                             silicon-default-theme))
+                   (background-color
+                    (read-string "Background color: "
+                                 silicon-default-background-color
+                                 '-silicon--background-color-history
+                                 silicon-default-background-color))
+                   (highlight-lines
+                    (read-string "Highlight lines: " nil nil nil))
+                   (show-line-numbers
+                    (yes-or-no-p "Add line numbers? "))
+                   (show-window-controls
+                    (yes-or-no-p "Add window controls? "))
+                   (rounded-corners
+                    (yes-or-no-p "Rounded corners? ")))
+               (-silicon--build-command-opts-string
+                :theme theme
+                :background-color background-color
+                :highlight-lines
+                (if (string= "" highlight-lines)
+                    nil
+                  highlight-lines)
+                :line-numbers show-line-numbers
+                :window-controls show-window-controls
+                :rounded-corners rounded-corners)))
+            (t
+             (-silicon--build-command-opts-string))))
 
-            (command
-             `(,silicon-executable-path
-               ,@ (split-string options) "-c" ,temp-file)))
+          ;; `-silicon--build-command-opts-string' shell-quotes its values,
+          ;; but `start-process' bypasses the shell, so silicon would see the
+          ;; quotes as part of the value and reject them.  Unquote first,
+          ;; keeping values that legitimately contain spaces intact.
+          (command
+           `(,silicon-executable-path
+             ,@
+             (split-string-and-unquote
+              (string-replace "'" "\"" options))
+             "-c" ,temp-file)))
 
        ;; Write the region to the temporary file
        (with-temp-file temp-file

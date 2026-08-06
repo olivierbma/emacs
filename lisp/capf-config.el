@@ -33,26 +33,46 @@
  :init (marginalia-mode)
  :hook (after-init . marginalia-mode))
 
-;; Orderless: Flexible, order-independent matching style
+;; Orderless: Flexible, order-independent matching style.
+;;
+;; NOTE: inside vertico minibuffers, `vertico-prescient-mode' shadows all of
+;; this with the `prescient' style buffer-locally (see below) -- prescient is
+;; the only one of the two that ranks by match quality.  Orderless remains the
+;; global style, so it still governs plain `completion-at-point' and evil's `:'
+;; ex prompt, which never get the vertico UI.
 (use-package
  orderless
  :ensure t
  :defer t
  :custom
- ;;  orderless-flex
- (orderless-matching-styles
-  '(orderless-literal orderless-regexp orderless-flex))
+ ;; Keep `orderless-flex' OUT of the default styles: matching styles are a
+ ;; disjunction, so flex matches everything (`rcl.h' matches `--r--c--l--.h')
+ ;; and orderless does no ranking, so literal hits get buried.  Instead flex is
+ ;; opt-in per component via `orderless-affix-dispatch': prefix or suffix a
+ ;; component with ~ for flex, = literal, ^ literal-prefix, , initialism,
+ ;; ! without, % char-fold.
+ (orderless-matching-styles '(orderless-literal orderless-regexp))
+ (orderless-style-dispatchers '(orderless-affix-dispatch))
  (completion-styles '(orderless basic))
- (completion-category-overrides
-  '((file (styles partial-completion)))))
+ ;; (completion-category-overrides
+ ;;  '((file (styles partial-completion))))
+ )
 
-;; (use-package prescient :ensure t)
 (use-package
  vertico-prescient
  :ensure t
  :demand t
  :after vertico
- :custom (vertico-prescient-enable-filtering nil)
+ :custom
+ (vertico-prescient-enable-filtering t)
+ (prescient-sort-full-matches-first t)
+ (prescient-filter-method '(literal regexp initialism fuzzy))
+ :custom-face
+ (prescient-primary-highlight
+  ((default :weight bold)
+   (((class color) (min-colors 88) (background dark)) :foreground "#72a4ff")
+   (((class color) (min-colors 88) (background light)) :foreground "#223fbf")
+   (t :foreground "blue")))
  :config
  (prescient-persist-mode +1)
  (vertico-prescient-mode +1))
