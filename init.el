@@ -425,20 +425,21 @@
  (fringe-helper-define
   'git-gutter-fr:added
   '(center repeated)
-  "XXX....."
-  "XXX....."
-  "XXX....."
-  "XXX.....")
+  "XX......"
+  "XX......"
+  "XX......"
+  "XX......")
  (fringe-helper-define
   'git-gutter-fr:modified
   '(center repeated)
-  "XXX....."
-  "XXX....."
-  "XXX....."
-  "XXX.....")
+  "XX......"
+  "XX......"
+  "XX......"
+  "XX......")
  (fringe-helper-define
   'git-gutter-fr:deleted
   'bottom
+  "X......."
   "X......."
   "XX......"
   "XX......"
@@ -446,13 +447,12 @@
   "XXX....."
   "XXXX...."
   "XXXXX..."
-  "XXXXXX.."
-  "XXXXX..."
   "XXXX...."
   "XXX....."
   "XXX....."
   "XX......"
   "XX......"
+  "X......."
   "X......."))
 
 (use-package

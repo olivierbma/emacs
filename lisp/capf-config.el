@@ -34,12 +34,6 @@
  :hook (after-init . marginalia-mode))
 
 ;; Orderless: Flexible, order-independent matching style.
-;;
-;; NOTE: inside vertico minibuffers, `vertico-prescient-mode' shadows all of
-;; this with the `prescient' style buffer-locally (see below) -- prescient is
-;; the only one of the two that ranks by match quality.  Orderless remains the
-;; global style, so it still governs plain `completion-at-point' and evil's `:'
-;; ex prompt, which never get the vertico UI.
 (use-package
  orderless
  :ensure t
@@ -68,14 +62,51 @@
  (prescient-sort-full-matches-first t)
  (prescient-filter-method '(literal regexp initialism fuzzy))
  :custom-face
- (prescient-primary-highlight
-  ((default :weight bold)
-   (((class color) (min-colors 88) (background dark)) :foreground "#72a4ff")
-   (((class color) (min-colors 88) (background light)) :foreground "#223fbf")
-   (t :foreground "blue")))
+ ;; Follow the theme rather than hardcoding a colour.  The major-mode segment
+ ;; resolves `doom-modeline-buffer-major-mode' -> `doom-modeline-emphasis' ->
+ ;; `mode-line-emphasis', which doom-challenger-deep sets to its `highlight'
+ ;; colour.  Face inheritance is resolved at redisplay, so `load-theme' repaints
+ ;; this automatically.  `mode-line-emphasis' carries no background of its own,
+ ;; so only the foreground is borrowed.
+ (prescient-primary-highlight ((t :inherit mode-line-emphasis :weight bold)))
  :config
  (prescient-persist-mode +1)
  (vertico-prescient-mode +1))
+
+;; `prescient--highlight-candidate' highlights the WHOLE regexp match (group 0)
+;; with `prescient-primary-highlight' and merely underlines the capture groups.
+;; That is unreadable with `fuzzy' in `prescient-filter-method': the per-subquery
+;; regexp is `literal\|regexp\|initialism\|fuzzy' and matching is leftmost-first,
+;; so the fuzzy branch nearly always wins and group 0 stretches from the first
+;; query character to the last -- e.g. "car" on "a-cat-parser" matches "cat-pars"
+;; and the entire candidate lights up.  Highlight the capture groups instead when
+;; the winning branch produced any (fuzzy, initialism), and only fall back to
+;; group 0 for the group-less branches (literal, regexp), where it is exact.
+(defun ob/prescient--highlight-candidate (regexps case-fold candidate)
+  "Highlight text matching REGEXPS and considering CASE-FOLD in CANDIDATE."
+  (setq candidate (copy-sequence candidate))
+  (prog1 candidate
+    (let ((case-fold-search case-fold))
+      (save-match-data
+        (dolist (regexp regexps)
+          (when (string-match regexp candidate)
+            (let ((matched-group nil))
+              (cl-loop for (start end) on (cddr (match-data)) by #'cddr
+                       do (when (and start end)
+                            (setq matched-group t)
+                            (font-lock-prepend-text-property
+                             start end
+                             'face 'prescient-primary-highlight
+                             candidate)))
+              (unless matched-group
+                (font-lock-prepend-text-property
+                 (match-beginning 0) (match-end 0)
+                 'face 'prescient-primary-highlight
+                 candidate)))))))))
+
+(advice-add
+ 'prescient--highlight-candidate
+ :override #'ob/prescient--highlight-candidate)
 
 (use-package affe :ensure t :defer t)
 
