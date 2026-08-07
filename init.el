@@ -677,7 +677,7 @@ With a universal argument, prompt for options or let you edit them manually."
 ;; is left as evil's ex line for `:w', `:%s/foo/bar/g', ranges and friends -- it
 ;; reads via `read-from-minibuffer', which vertico never advises, so it can only
 ;; ever do on-demand `completion-at-point'.
-(my/leader ":" 'execute-extended-command)
+(my/leader ";" 'execute-extended-command)
 
 ;; custom personalization
 (custom-set-variables

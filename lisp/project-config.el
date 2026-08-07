@@ -57,7 +57,7 @@
   "Use consult-projectile if in a project, otherwise use consult-find."
   (interactive)
   (if (projectile-project-p)
-      (projectile-find-file projectile-project-root)
+      (consult-projectile projectile-project-root)
     ;; (consult-projectile-find-file)
     (consult-fd default-directory)))
 
