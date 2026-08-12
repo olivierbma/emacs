@@ -8,6 +8,9 @@
  :ensure t
  :defer t
  :mode ("\\.nix\\'" . nix-ts-mode))
+
+(use-package tuareg
+  :mode ("\\.ml\\'" . tuareg-mode))
 (use-package typst-ts-mode :ensure t :defer t)
 (use-package
  cmake-ts-mode
@@ -218,6 +221,9 @@ tree-sitter parse tree."
  (define-key acm-mode-map (kbd "<tab>") #'acm-select-next)
  (define-key acm-mode-map (kbd "S-TAB") #'acm-select-prev)
  (define-key acm-mode-map (kbd "<backtab>") #'acm-select-prev)
+ (add-to-list
+  'lsp-bridge-single-lang-server-mode-list
+  '((ocaml-ts-mode ocaml-mode tuareg-mode) . "ocamllsp"))
 
  :general
  (my/leader

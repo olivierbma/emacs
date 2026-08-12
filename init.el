@@ -292,7 +292,10 @@
  doom-modeline
  :ensure t
  :defer t
- :init (doom-modeline-mode 1))
+ :init
+ (doom-modeline-mode 1)
+ (line-number-mode +1)
+ (column-number-mode +1))
 
 
 (use-package
@@ -513,6 +516,10 @@
  :config
  (evil-goggles-mode)
  (evil-goggles-use-diff-faces))
+
+(use-package direnv
+ :config
+ (direnv-mode))
 
 ;; NOTE: the mode must be enabled from :init, not :config.  With
 ;; `use-package-always-defer' t and no :demand/:hook/:commands, this block never
