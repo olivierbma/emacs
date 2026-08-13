@@ -14,7 +14,6 @@
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (setq gc-cons-threshold (* 50 1024 1024)) ;; 50 MB
 
-;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
 
 ;; setting of package manager

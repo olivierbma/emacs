@@ -3,22 +3,9 @@
 ;; Must be loaded before treesit-auto's :config below runs, since
 ;; `treesit-auto-add-to-auto-mode-alist' only registers a language
 ;; if its ts-mode function is already `fboundp' at that point.
-(use-package
- nix-ts-mode
- :ensure t
- :defer t
- :mode ("\\.nix\\'" . nix-ts-mode))
-
-(use-package tuareg
-  :mode ("\\.ml\\'" . tuareg-mode))
+(use-package nix-ts-mode :ensure t :defer t)
+(use-package haskell-ts-mode :ensure t :defer t :mode "\\.hs\\'")
 (use-package typst-ts-mode :ensure t :defer t)
-(use-package
- cmake-ts-mode
- :ensure t
- :defer t
- :mode
- (("CMakeLists\\.txt\\'" . cmake-ts-mode)
-  ("\\.cmake\\'" . cmake-ts-mode)))
 
 (use-package
  treesit-auto
@@ -148,8 +135,6 @@ tree-sitter parse tree."
         (forward-line (- (1- (length lines))))
         (end-of-line)))))
 
-;; c-ts-mode.el provides both `c-ts-mode' and `c++-ts-mode', so keying on
-;; `c-ts-mode' covers either entry point.
 (with-eval-after-load 'c-ts-mode
   (general-define-key
    :states '(normal)
@@ -172,14 +157,8 @@ tree-sitter parse tree."
  :custom
  (flycheck-display-errors-delay 0.3)
  (flycheck-highlight-mode 'symbols))
-
-(use-package
- markdown-mode
- :ensure t
- :defer t
- :custom
- (markdown-header-scaling t)
- (markdown-fontify-code-blocks-natively t))
+;; lsp-bridge needs markdown-mode (renders documentation popups)
+(use-package markdown-mode :ensure t :defer t)
 ;; lsp-bridge's acm-backend-yas requires yasnippet to be loadable when
 ;; lsp-bridge loads, so make sure it is available (and globally enabled)
 ;; before the lsp-bridge use-package below.
@@ -195,16 +174,16 @@ tree-sitter parse tree."
  lsp-bridge
  :load-path "~/.emacs.d/vendor/lsp-bridge"
  :demand t
- :hook (lsp-bridge-mode . lsp-bridge-breadcrumb-mode)
+ :hook (lsp-bridge-mode . lsp-bridge-semantic-tokens-mode)
+ :init
+ ;; The Python backend runs through the repo's `python-lsp-bridge' uv
+ ;; wrapper, symlinked into ~/.local/bin. lsp-bridge auto-detects that
+ ;; name on PATH, so no `lsp-bridge-python-command' override is needed --
+ ;; `uv run' provisions the exact deps from the repo's uv.lock on demand.
+ ;; (setq lsp-bridge-enable-hover-diagnostic t)
+ ;; (setq lsp-bridge-enable-signature-help t)
+ ;; (setq lsp-bridge-enable-diagnostics t)
  :custom
- (lsp-bridge-breadcrumb-idle-delay 0.1)
- (lsp-bridge-enable-completion-in-minibuffer t)
- (lsp-bridge-ref-popup-window-handler
-  (lambda ()
-    (select-window
-     (display-buffer
-      lsp-bridge-ref-buffer
-      '((display-buffer-below-selected) (window-height . 0.35))))))
  (lsp-bridge-enable-hover-diagnostic t)
  (lsp-bridge-enable-signature-help t)
  (lsp-bridge-enable-diagnostics t)
@@ -215,15 +194,12 @@ tree-sitter parse tree."
  (acm-enable-yas t)
  (acm-candidate-match-function 'orderless-flex)
  (acm-backend-lsp-match-mode "fuzzy")
- :config
  (global-lsp-bridge-mode)
  (define-key acm-mode-map (kbd "TAB") #'acm-select-next)
  (define-key acm-mode-map (kbd "<tab>") #'acm-select-next)
  (define-key acm-mode-map (kbd "S-TAB") #'acm-select-prev)
  (define-key acm-mode-map (kbd "<backtab>") #'acm-select-prev)
- (add-to-list
-  'lsp-bridge-single-lang-server-mode-list
-  '((ocaml-ts-mode ocaml-mode tuareg-mode) . "ocamllsp"))
+ ;; RET still accepts the selected candidate (acm default).
 
  :general
  (my/leader
