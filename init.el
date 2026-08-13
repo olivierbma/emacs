@@ -13,6 +13,7 @@
 (setq read-process-output-max (* 8 1024 1024)) ; 8MB
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (setq gc-cons-threshold (* 50 1024 1024)) ;; 50 MB
+(add-to-list 'initial-frame-alist '(fullscreen . maximized))
 
 
 
@@ -40,17 +41,21 @@
 
 
 ;; setup env variables for all other packages
-(use-package
- exec-path-from-shell
- :ensure t
- :defer t
- :init (exec-path-from-shell-initialize))
+(use-package exec-path-from-shell
+  :ensure t
+  :demand t
+  :init
+  (setq exec-path-from-shell-arguments nil)
+  :config
+  (exec-path-from-shell-initialize))
+
 
 (use-package
  ediff
  :ensure t
  :custom (ediff-window-setup-function 'ediff-setup-windows-plain))
 
+(setq native-comp-jit-compilation-deny-list '("sentence-navigation"))
 (use-package general :ensure t :demand t)
 
 ;; Single source of truth for the leader key. :keymaps 'override binds into
@@ -273,7 +278,14 @@
 (use-package
  doom-themes
  :demand t ;; no lazy load
- :config (load-theme 'doom-challenger-deep t))
+ :config
+ (load-theme 'doom-challenger-deep t)
+ ;; Doom Themes creates a face-inheritance cycle with Gnus on Emacs 31.
+ ;; This matches the upstream fix: https://github.com/doomemacs/themes/pull/892
+ (custom-theme-set-faces
+  'doom-challenger-deep
+  '(gnus-group-news-low-empty
+    ((t (:inherit gnus-group-mail-1-empty :weight normal))))))
 
 (use-package
  hl-line

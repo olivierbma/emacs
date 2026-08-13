@@ -3,9 +3,21 @@
 ;; Must be loaded before treesit-auto's :config below runs, since
 ;; `treesit-auto-add-to-auto-mode-alist' only registers a language
 ;; if its ts-mode function is already `fboundp' at that point.
-(use-package nix-ts-mode :ensure t :defer t)
+(use-package
+ nix-ts-mode
+ :ensure t
+ :defer t
+ :mode ("\\.nix\\'" . nix-ts-mode))
+(use-package tuareg :mode ("\\.ml\\'" . tuareg-mode))
 (use-package haskell-ts-mode :ensure t :defer t :mode "\\.hs\\'")
 (use-package typst-ts-mode :ensure t :defer t)
+(use-package
+ cmake-ts-mode
+ :ensure t
+ :defer t
+ :mode
+ (("CMakeLists\\.txt\\'" . cmake-ts-mode)
+  ("\\.cmake\\'" . cmake-ts-mode)))
 
 (use-package
  treesit-auto
@@ -19,8 +31,7 @@
  ;; cmake-ts-mode's own CMakeLists.txt entry (in Emacs core) only
  ;; takes effect once the file has been loaded, which doesn't happen
  ;; from just an autoload; register it explicitly here instead.
- (add-to-list
-  'auto-mode-alist '("CMakeLists\\.txt\\'" . cmake-ts-mode))
+ (add-to-list 'auto-mode-alist '("CMakeLists\\.txt\\'" . cmake-ts-mode))
  (global-treesit-auto-mode))
 
 
@@ -139,10 +150,8 @@ tree-sitter parse tree."
   (general-define-key
    :states '(normal)
    :keymaps '(c-ts-mode-map c++-ts-mode-map)
-   :prefix
-   "SPC"
-   "c d"
-   'my/doxygen-comment))
+   :prefix "SPC"
+   "c d" 'my/doxygen-comment))
 
 
 (use-package sly :ensure t :defer t)
@@ -174,7 +183,8 @@ tree-sitter parse tree."
  lsp-bridge
  :load-path "~/.emacs.d/vendor/lsp-bridge"
  :demand t
- :hook (lsp-bridge-mode . lsp-bridge-semantic-tokens-mode)
+ :hook
+ (lsp-bridge-mode . lsp-bridge-semantic-tokens-mode)
  :init
  ;; The Python backend runs through the repo's `python-lsp-bridge' uv
  ;; wrapper, symlinked into ~/.local/bin. lsp-bridge auto-detects that
@@ -188,13 +198,15 @@ tree-sitter parse tree."
  (lsp-bridge-enable-signature-help t)
  (lsp-bridge-enable-diagnostics t)
  (lsp-bridge-ref-delete-other-windows nil)
- (lsp-bridge-nix-lsp-server "nil")
+ (lsp-bridge-nix-lsp-server "nixd")
  (lsp-bridge-cmake-lsp-server "neocmakelsp")
  (acm-enable-icon (display-graphic-p))
  (acm-enable-yas t)
  (acm-candidate-match-function 'orderless-flex)
  (acm-backend-lsp-match-mode "fuzzy")
+ :config
  (global-lsp-bridge-mode)
+ ;; Completion menu (acm) keys: TAB selects next, S-TAB previous; RET inserts.
  (define-key acm-mode-map (kbd "TAB") #'acm-select-next)
  (define-key acm-mode-map (kbd "<tab>") #'acm-select-next)
  (define-key acm-mode-map (kbd "S-TAB") #'acm-select-prev)
@@ -203,38 +215,25 @@ tree-sitter parse tree."
 
  :general
  (my/leader
-  "g"
-  '(:ignore t :which-key "goto")
-  "g d"
-  'lsp-bridge-find-def
-  "g i"
-  'lsp-bridge-find-impl
-  "g r"
-  'lsp-bridge-find-references
-  "g p"
-  'lsp-bridge-find-def-return
+  "g" '(:ignore t :which-key "goto")
+  "g d" 'lsp-bridge-find-def
+  "g i" 'lsp-bridge-find-impl
+  "g r" 'lsp-bridge-find-references
+  "g p" 'lsp-bridge-find-def-return
 
-  "c"
-  '(:ignore t :which-key "code")
-  "c a"
-  'lsp-bridge-code-action
-  "c r"
-  'lsp-bridge-rename
-  "c f"
-  'my/format-buffer
+  "c" '(:ignore t :which-key "code")
+  "c a" 'lsp-bridge-code-action
+  "c r" 'lsp-bridge-rename
+  "c f" 'my/format-buffer
 
-  "s d"
-  'lsp-bridge-diagnostic-list)
+  "s d" 'lsp-bridge-diagnostic-list)
  (:states
   '(normal)
   :prefix ""
 
-  "K"
-  'lsp-bridge-popup-documentation
-  "[d"
-  'lsp-bridge-diagnostic-jump-prev
-  "]d"
-  'lsp-bridge-diagnostic-jump-next))
+  "K" 'lsp-bridge-popup-documentation
+  "[d" 'lsp-bridge-diagnostic-jump-prev
+  "]d" 'lsp-bridge-diagnostic-jump-next))
 
 (defun my/format-buffer ()
   "Format the current buffer with elisp-autofmt in Emacs Lisp, lsp-bridge otherwise."
