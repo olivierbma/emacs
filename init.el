@@ -16,7 +16,6 @@
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
 
 
-
 ;; setting of package manager
 
 (defvar bootstrap-version)
@@ -41,13 +40,12 @@
 
 
 ;; setup env variables for all other packages
-(use-package exec-path-from-shell
-  :ensure t
-  :demand t
-  :init
-  (setq exec-path-from-shell-arguments nil)
-  :config
-  (exec-path-from-shell-initialize))
+(use-package
+ exec-path-from-shell
+ :ensure t
+ :demand t
+ :init (setq exec-path-from-shell-arguments nil)
+ :config (exec-path-from-shell-initialize))
 
 
 (use-package
@@ -72,6 +70,7 @@
  majutsu
  :straight (:host github :repo "0WD0/majutsu")
  :preface
+ (setq majutsu-jj-executable (expand-file-name "~/.nix-profile/bin/jj"))
  ;; --- jj annotate (blame) for the current line ---
  (define-derived-mode
   jj-annotate-mode
@@ -156,7 +155,10 @@
        (dirvish-quit)
      (dirvish)))
 
- :general (my/leader "`" 'my/toggle-dirvish))
+ :general (my/leader "`" 'my/toggle-dirvish)
+ (:states
+  '(normal motion emacs)
+  :keymaps 'dirvish-mode-map "?" #'dirvish-dispatch))
 
 (use-package ghostel :ensure t :defer t :custom (ghostel-shell "nu"))
 
@@ -278,14 +280,15 @@
 (use-package
  doom-themes
  :demand t ;; no lazy load
- :config
- (load-theme 'doom-challenger-deep t)
+ :config (load-theme 'doom-challenger-deep t)
  ;; Doom Themes creates a face-inheritance cycle with Gnus on Emacs 31.
  ;; This matches the upstream fix: https://github.com/doomemacs/themes/pull/892
- (custom-theme-set-faces
-  'doom-challenger-deep
-  '(gnus-group-news-low-empty
-    ((t (:inherit gnus-group-mail-1-empty :weight normal))))))
+ (custom-theme-set-faces 'doom-challenger-deep
+                         '(gnus-group-news-low-empty
+                           ((t
+                             (:inherit
+                              gnus-group-mail-1-empty
+                              :weight normal))))))
 
 (use-package
  hl-line
@@ -528,9 +531,7 @@
  (evil-goggles-mode)
  (evil-goggles-use-diff-faces))
 
-(use-package direnv
- :config
- (direnv-mode))
+(use-package direnv :config (direnv-mode))
 
 ;; NOTE: the mode must be enabled from :init, not :config.  With
 ;; `use-package-always-defer' t and no :demand/:hook/:commands, this block never

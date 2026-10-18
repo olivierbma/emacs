@@ -183,17 +183,26 @@ tree-sitter parse tree."
  lsp-bridge
  :load-path "~/.emacs.d/vendor/lsp-bridge"
  :demand t
- :hook
- (lsp-bridge-mode . lsp-bridge-semantic-tokens-mode)
+ :hook (lsp-bridge-mode . lsp-bridge-breadcrumb-mode)
  :init
- ;; The Python backend runs through the repo's `python-lsp-bridge' uv
- ;; wrapper, symlinked into ~/.local/bin. lsp-bridge auto-detects that
- ;; name on PATH, so no `lsp-bridge-python-command' override is needed --
- ;; `uv run' provisions the exact deps from the repo's uv.lock on demand.
- ;; (setq lsp-bridge-enable-hover-diagnostic t)
- ;; (setq lsp-bridge-enable-signature-help t)
- ;; (setq lsp-bridge-enable-diagnostics t)
+ ;; Include servers installed by `uv tool install' in daemon sessions too.
+ (add-to-list 'exec-path (expand-file-name "~/.local/bin"))
  :custom
+ ;; `uv run lsp_bridge.py' reads upstream's inline dependency list and reuses
+ ;; an isolated environment, instead of relying on the system Python's modules.
+ (lsp-bridge-python-command "uv")
+ (lsp-bridge-user-langserver-dir
+  (expand-file-name "lisp/langserver/" user-emacs-directory))
+ ;; Let navigation settle before updating headers or opening child frames.
+ (lsp-bridge-breadcrumb-idle-delay 0.5)
+ (lsp-bridge-diagnostic-display-errors-delay 0.75)
+ (lsp-bridge-enable-completion-in-minibuffer t)
+ (lsp-bridge-ref-popup-window-handler
+  (lambda ()
+    (select-window
+     (display-buffer
+      lsp-bridge-ref-buffer
+      '((display-buffer-below-selected) (window-height . 0.35))))))
  (lsp-bridge-enable-hover-diagnostic t)
  (lsp-bridge-enable-signature-help t)
  (lsp-bridge-enable-diagnostics t)
@@ -205,6 +214,8 @@ tree-sitter parse tree."
  (acm-candidate-match-function 'orderless-flex)
  (acm-backend-lsp-match-mode "fuzzy")
  :config
+ (require 'lsp-bridge-fixes)
+ (require 'lsp-bridge-python)
  (global-lsp-bridge-mode)
  ;; Completion menu (acm) keys: TAB selects next, S-TAB previous; RET inserts.
  (define-key acm-mode-map (kbd "TAB") #'acm-select-next)

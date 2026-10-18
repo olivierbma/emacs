@@ -4,6 +4,10 @@
 
 (use-package consult :ensure t :defer t)
 (use-package consult-projectile :ensure t :after (consult projectile))
+(use-package consult-fff
+  :straight nil
+  :commands (consult-fff consult-fff-stop consult-fff-grep
+                         consult-fff-grep-regexp consult-fff-grep-fuzzy))
 
 (use-package
  projectile
@@ -45,7 +49,9 @@
   "s" '(:ignore t :which-key "search")
   "s r" 'consult-projectile-recentf
   "s f" 'my/smart-file-search
-  "s g" 'consult-ripgrep
+  "s F" 'my/directory-file-search
+  "s g" 'consult-fff-grep
+  "s G" 'consult-fff-grep-fuzzy
   "s m" 'devdocs-lookup
   "s p" 'consult-projectile-switch-project
   "s o" 'consult-outline
@@ -53,13 +59,22 @@
 
   "g h" 'projectile-find-other-file))
 
-(defun my/smart-file-search ()
-  "Use consult-projectile if in a project, otherwise use consult-find."
-  (interactive)
-  (if (projectile-project-p)
-      (consult-projectile projectile-project-root)
-    ;; (consult-projectile-find-file)
-    (consult-fd default-directory)))
+(defun my/smart-file-search (&optional choose-directory)
+  "Search indexed project files, or choose a directory with a prefix argument."
+  (interactive "P")
+  (consult-fff
+   (cond
+    (choose-directory (read-directory-name "FFF directory: " nil nil t))
+    ((projectile-project-p) (projectile-project-root))
+    (t default-directory))))
+
+(defun my/directory-file-search (&optional choose-directory)
+  "Search indexed files below the current directory.
+With CHOOSE-DIRECTORY, prompt for a different directory."
+  (interactive "P")
+  (consult-fff (if choose-directory
+                   (read-directory-name "FFF directory: " nil nil t)
+                 default-directory)))
 
 
 (provide 'project-config)
